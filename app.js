@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22';
+  var VERSION = '2026.07.22.2';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -325,7 +325,11 @@
   }
 
   var old = document.getElementById('__pk_panel');
-  if (old) { clearInterval(window.__pk_t); old.remove(); return; } // 다시 누르면 닫기(토글)
+  if (old) { // 다시 누르면 닫기(토글)
+    clearInterval(window.__pk_t);
+    document.body.style.paddingBottom = window.__pk_pad0 || '';
+    old.remove(); return;
+  }
 
   // 모바일(터치) 기기면 하단 시트 형태. 사이트에 모바일 뷰포트 설정이 없어
   // 폰에서 데스크톱처럼 축소 렌더링될 수 있으므로 zoom 으로 키운다.
@@ -344,11 +348,35 @@
     (MOBILE ? '14px 14px 0 0' : '12px 12px 0 0') + ';' + (MOBILE ? '' : 'cursor:move;') + 'transition:background .3s">' +
     '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
     '<span id="__pk_status" style="font-weight:700">대기</span>' +
+    '<span id="__pk_min" style="cursor:pointer;font-size:16px;padding:2px 6px">▾</span>' +
     '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
     '<div id="__pk_body" style="padding:12px"></div>' +
-    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
+    '<div id="__pk_foot" style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
   document.body.appendChild(p);
-  document.getElementById('__pk_x').onclick = function () { clearInterval(window.__pk_t); p.remove(); };
+
+  // 모바일: 패널이 페이지 아래쪽을 가리지 않도록, 패널 높이만큼
+  // 본문 하단 여백을 만들어 준다 (스크롤하면 전부 보임). 닫으면 원복.
+  window.__pk_pad0 = document.body.style.paddingBottom;
+  function syncPad() {
+    if (!MOBILE) return;
+    try { document.body.style.paddingBottom = Math.ceil(p.getBoundingClientRect().height + 12) + 'px'; } catch (e) {}
+  }
+
+  document.getElementById('__pk_x').onclick = function () {
+    clearInterval(window.__pk_t);
+    document.body.style.paddingBottom = window.__pk_pad0 || '';
+    p.remove();
+  };
+
+  // 접기/펴기 — 접으면 헤더(상태 배지)만 남아 페이지 조작이 편하다
+  var minimized = false;
+  document.getElementById('__pk_min').onclick = function () {
+    minimized = !minimized;
+    document.getElementById('__pk_body').style.display = minimized ? 'none' : '';
+    document.getElementById('__pk_foot').style.display = minimized ? 'none' : '';
+    this.textContent = minimized ? '▴' : '▾';
+    syncPad();
+  };
 
   // 헤더 드래그로 이동 (데스크톱 전용 — 모바일 하단 시트는 고정)
   if (!MOBILE) (function () {
@@ -371,6 +399,7 @@
   })();
 
   render();
+  syncPad();
   clearInterval(window.__pk_t);
-  window.__pk_t = setInterval(render, 1000);
+  window.__pk_t = setInterval(function () { render(); syncPad(); }, 1000);
 })();
