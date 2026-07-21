@@ -1,43 +1,29 @@
 /*
- * pweb 주차할인 계산기 — pweb.kr 웹 할인등록 화면 보조 패널 (북마클릿)
+ * pweb 주차할인 계산기 — 본체 (app.js)
  *
- * 사이트 주소 앞부분(예: a23021)은 건물 번호일 뿐이며, 이 도구는 특정 건물에
- * 한정되지 않는다. pweb.kr 웹 할인등록 화면이면 어디서든 동작한다.
+ * 2026-07-21 로더 방식 전환 (사용자 승인): 북마크에는 초소형 로더만 들어가고,
+ * 클릭할 때마다 이 파일을 GitHub Pages 에서 새로 받아 실행한다.
+ *   - 이유: 전체 코드를 북마크 URL 에 내장하면 모바일 브라우저의 길이 한계로
+ *     실행이 조용히 실패한다 (인코딩 후 수만 자).
+ *   - 효과: 항상 최신 실행 → 수동 업데이트·버전 배너 불필요. 배포 = push 뿐.
+ *   - 이 파일은 어떤 데이터도 외부로 보내지 않는다. 받아오기(GET)만 한다.
  *
- * 사이트는 pweb.kr(주차관제 벤더)이 제공하므로 직접 수정할 수 없다. 이 스크립트는
- * 이미 로그인된 페이지 위에 계산 패널을 하나 띄운다. 페이지가 이미 불러온
- * 데이터(전역 변수)만 읽으며, 외부로 아무것도 보내지 않고 저장하지도 않는다.
- * (예외 1건: 패널을 열 때 공개 배포 페이지의 version.json 을 1회 읽어 새 버전
- *  여부만 확인한다. 차량번호 등 어떤 데이터도 보내지 않으며 실패해도 무시한다.)
- *
- * 배포 절차: VERSION 을 올리고 → 같은 값으로 version.json 갱신 → 공개 페이지 재배포.
- *   기존 사용자 북마클릿이 version.json 과 자신의 VERSION 이 다르면
- *   패널 상단에 깜빡이는 업데이트 안내 + 새창 링크를 띄운다.
- *
- * 읽는 값:
- *   window.dataSetMst  — 조회된 차량 목록 (id, carNo, incar_min 경과분)
- *   #peId              — 현재 선택된 차량 id
- *   window.dataSetDtl  — 선택 차량에 이미 적용된 할인 목록 (discountTypeId, dc_time)
+ * 지원 화면 (둘 다 pweb.kr):
+ *   PC  /discount/registration — 페이지 전역(dataSetMst/dataSetDtl)만 읽는다.
+ *   모바일 /discount/doViewRegistrationDscnt/{id}/{token}/{날짜}/{cardType}
+ *     — 전용 모바일 UI. 적용 내역이 페이지에 없어 조회 API
+ *       POST /discount/registration/getForDiscount (읽기 전용)를 5초마다 부른다
+ *       (2026-07-21 사용자 승인. 적용 내역은 응답의 parkVisitCar 필드).
  *
  * 계산 규칙 (사용자 확정 2026-07-16):
  *   커버 = 기본무료 30분 + 적용된 할인 dc_time 합계
  *   여유 = 커버 − 경과.  여유≥0 → 0원(여유 분·만료 시각 표시),
  *   부족 → 무료2시간(미사용 시) 먼저 + 최소 비용 유료권 조합(DP), 안전하게 초과 커버.
  *
- * UI (2026-07-16 개편):
- *   - 추천 주차권을 카드 리스트로 표시. 패널을 연 뒤 사용자가 실제로 적용한
- *     주차권은 dataSetDtl 변화로 감지해 ✓적용됨 카드로 남기고,
- *     남은 부족분은 매번 재계산한다 (추천과 다른 권종을 써도 맞춰 감).
- *   - 헤더 색·배지로 완료(초록)/부족(빨강)/대기(회색) 상태를 크게 표시.
- *   - 0원 상태에선 남은 여유를 "N시간 N분 · HH:MM까지"로 크게, 1초마다
- *     카운트다운한다. (incar_min 은 재조회 전까지 고정이므로, 값이 갱신된
- *     시각을 기억해 현재 경과를 보간한다.)
- *
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.21.4';                 // 배포 버전 — version.json 과 함께 갱신할 것
-  var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper'; // 공개 배포 페이지 (2026-07-21 확정)
+  var VERSION = '2026.07.22';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -50,6 +36,11 @@
   var PAID = TICKETS.filter(function (t) { return t.p > 0; });
   var byId = {};
   TICKETS.forEach(function (t) { byId[t.id] = t; });
+
+  // 화면 모드
+  var ON_PWEB = /(^|\.)pweb\.kr$/i.test(location.hostname);
+  var PC_PAGE = location.pathname.indexOf('/discount/registration') === 0;
+  var MOB_PAGE = location.pathname.indexOf('/discount/doViewRegistrationDscnt') === 0;
 
   // 부족한 need(분)을 최소 비용으로 덮는 유료권 조합 (DP). items 는 id→장수
   function best(need) {
@@ -92,42 +83,74 @@
     return null;
   }
 
-  // 현재 선택 차량에 적용된 할인 → { counts: id→장수, sum: 총 차감분, list: 이름들 }
-  function curApplied() {
-    var counts = {}, sum = 0, list = [];
-    (window.dataSetDtl || []).forEach(function (a) {
-      var id = String(a.discountTypeId), min = parseFloat(a.dc_time) || 0;
-      counts[id] = (counts[id] || 0) + 1;
-      sum += min;
-      list.push(a.discount_name + '(' + min + '분)');
-    });
-    return { counts: counts, sum: sum, list: list };
+  // ── 모바일: 적용 내역 조회 (읽기 전용, 5초 스로틀) ────────────────
+  var M = { applied: null, lastFetch: 0, err: 0 };
+  function mobParams() {
+    var seg = location.pathname.split('/'); // ['','discount','doView…',id,token,날짜,cardType]
+    // member_id 는 서버가 페이지(사이드 메뉴)에 박아준 "이름(ID)" 패턴에서 추출
+    var mid = (document.body.textContent.match(/\(([A-Za-z0-9]{2,12})\)/) || [])[1] || '';
+    return { id: seg[3] || '', startDate: seg[5] || '', iCardType: seg[6] || '0', member: mid };
+  }
+  function mobFetch() {
+    var now = Date.now();
+    if (now - M.lastFetch < 5000) return;
+    M.lastFetch = now;
+    var p = mobParams();
+    try {
+      fetch('/discount/registration/getForDiscount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'id=' + encodeURIComponent(p.id) + '&iCardType=' + encodeURIComponent(p.iCardType) +
+              '&member_id=' + encodeURIComponent(p.member) + '&startDate=' + encodeURIComponent(p.startDate),
+        credentials: 'same-origin'
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (j && 'parkVisitCar' in j) {
+          var arr = j.parkVisitCar;
+          if (typeof arr === 'string') { try { arr = JSON.parse(arr); } catch (e) { arr = []; } }
+          M.applied = Array.isArray(arr) ? arr : [];
+          M.err = 0;
+        } else { M.err++; }
+      }).catch(function () { M.err++; });
+    } catch (e) { M.err++; }
   }
 
   // ── 호환성 자가진단 ──────────────────────────────────────────────
-  // 다른 건물 사이트는 구조가 다를 수 있다. 이 도구가 기대하는 구조가
-  // 하나라도 어긋나면 계산을 신뢰할 수 없으므로 전부 중단하고 차단한다.
+  // 기대 구조가 어긋나면 계산을 신뢰할 수 없으므로 전부 중단하고 차단한다.
   function compat() {
     var bad = [];
-    if (!document.getElementById('peId')) bad.push('#peId 입력 없음');
-    if (typeof window.fncDoListMst !== 'function') bad.push('fncDoListMst 함수 없음');
-    if (typeof window.fncDetailInfo !== 'function') bad.push('fncDetailInfo 함수 없음');
-    var mst = window.dataSetMst;
-    if (mst != null) {
-      if (!Array.isArray(mst)) bad.push('dataSetMst 형식 다름');
-      else if (mst.length) {
-        var r = mst[0];
-        if (!('id' in r) || !('carNo' in r) || !('incar_min' in r)) bad.push('dataSetMst 필드 다름');
-        else if (!isFinite(parseFloat(r.incar_min))) bad.push('incar_min 숫자 아님');
+    if (MOB_PAGE) {
+      var dt = document.getElementById('differentTime');
+      if (!dt) bad.push('#differentTime 없음');
+      else if (parseDT(dt.value || dt.textContent) == null) bad.push('주차시간 형식 다름');
+      if (typeof window.fncGoDscnt !== 'function') bad.push('fncGoDscnt 함수 없음');
+      if (!/^\d+$/.test((location.pathname.split('/')[3] || ''))) bad.push('URL 차량id 없음');
+      if (M.err >= 3) bad.push('조회 API 연속 실패');
+      if (M.applied && M.applied.length) {
+        var d0 = M.applied[0];
+        if (!('discountTypeId' in d0) || !('dc_time' in d0) || !('discount_name' in d0)) bad.push('적용내역 필드 다름');
+        else if (!isFinite(parseFloat(d0.dc_time))) bad.push('dc_time 숫자 아님');
       }
-    }
-    var dtl = window.dataSetDtl;
-    if (dtl != null) {
-      if (!Array.isArray(dtl)) bad.push('dataSetDtl 형식 다름');
-      else if (dtl.length) {
-        var d = dtl[0];
-        if (!('discountTypeId' in d) || !('dc_time' in d) || !('discount_name' in d)) bad.push('dataSetDtl 필드 다름');
-        else if (!isFinite(parseFloat(d.dc_time))) bad.push('dc_time 숫자 아님');
+    } else {
+      if (!document.getElementById('peId')) bad.push('#peId 입력 없음');
+      if (typeof window.fncDoListMst !== 'function') bad.push('fncDoListMst 함수 없음');
+      if (typeof window.fncDetailInfo !== 'function') bad.push('fncDetailInfo 함수 없음');
+      var mst = window.dataSetMst;
+      if (mst != null) {
+        if (!Array.isArray(mst)) bad.push('dataSetMst 형식 다름');
+        else if (mst.length) {
+          var r = mst[0];
+          if (!('id' in r) || !('carNo' in r) || !('incar_min' in r)) bad.push('dataSetMst 필드 다름');
+          else if (!isFinite(parseFloat(r.incar_min))) bad.push('incar_min 숫자 아님');
+        }
+      }
+      var dtl = window.dataSetDtl;
+      if (dtl != null) {
+        if (!Array.isArray(dtl)) bad.push('dataSetDtl 형식 다름');
+        else if (dtl.length) {
+          var d = dtl[0];
+          if (!('discountTypeId' in d) || !('dc_time' in d) || !('discount_name' in d)) bad.push('dataSetDtl 필드 다름');
+          else if (!isFinite(parseFloat(d.dc_time))) bad.push('dc_time 숫자 아님');
+        }
       }
     }
     return bad;
@@ -157,7 +180,6 @@
       '<div style="font-size:20px;font-weight:800">⛔ 사용 금지</div>' +
       '<div style="margin-top:8px;line-height:1.6">이 사이트는 이 도구가 아는 구조와 달라<br><b>계산 결과를 신뢰할 수 없습니다.</b><br>모든 기능을 중단했습니다.</div>' +
       '<div style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.14);border-radius:8px">이 도구를 사용하지 마시고<br><b>강주상 (tsusai@msn.com)</b> 에게 문의하세요.</div>' +
-      '<div style="margin-top:8px;font-size:12px;opacity:.85">위에 🔔 업데이트 안내가 떠 있다면 새 버전에서 해결됐을 수 있으니, 먼저 업데이트한 뒤 다시 시도하세요.</div>' +
       '</div>' +
       '<div style="margin-top:8px;color:#999;font-size:11px">사유: ' + bad.join(' · ') + '</div>';
   }
@@ -189,63 +211,81 @@
     if (st) st.textContent = text;
   }
 
+  function waiting(msg) {
+    setStatus('#6b7280', '대기');
+    var el = document.getElementById('__pk_body');
+    if (el) el.innerHTML = '<div style="padding:10px;color:#888">' + msg + '</div>';
+  }
+
   function render() {
     var el = document.getElementById('__pk_body');
     if (!el) return;
     var bad = compat();
     if (bad.length) {
-      // 구조가 안 보이는 이유를 위치로 구분한다:
-      //   pweb.kr 이 아님          → 전용 도구 안내
-      //   pweb.kr 인데 다른 화면    → 로그인/이동 안내 (로그인 페이지가 대표적)
-      //   할인등록 화면인데 어긋남  → 진짜 비호환 → 전면 차단
-      var onPweb = /(^|\.)pweb\.kr$/i.test(location.hostname);
-      var onReg = location.pathname.indexOf('/discount/registration') === 0;
-      if (onPweb && onReg) { block(bad); return; }
-      guide(onPweb); return;
+      // 구조가 안 보이는 이유를 위치로 구분:
+      //   pweb.kr 아님 → 전용 도구 안내 / pweb.kr 인데 지원 화면 아님 → 이동 안내
+      //   지원 화면인데 어긋남 → 진짜 비호환 → 전면 차단
+      if (ON_PWEB && (PC_PAGE || MOB_PAGE)) { block(bad); return; }
+      guide(ON_PWEB); return;
     }
     var now = Date.now();
-    var mst = window.dataSetMst,
-        peId = (document.getElementById('peId') || {}).value;
-    if (!peId) {
-      S.carId = null;
-      setStatus('#6b7280', '대기');
-      el.innerHTML = '<div style="padding:10px;color:#888">차량을 조회·선택하세요.</div>';
-      return;
-    }
 
-    // 차량이 바뀌면 추적 리셋. base(기준 적용내역)는 상세가 비동기로 오므로
-    // 1초 뒤 스냅샷한다 — 그 전까지는 "새로 적용됨" 판정을 하지 않는다.
-    if (peId !== S.carId) {
-      S = { carId: peId, E: null, seenAt: now, base: null, baseAt: now + 1000 };
+    // 화면 모드별로 차량·경과·적용내역을 모은다
+    var carKey, carNo, rawE, appliedRaw;
+    if (MOB_PAGE) {
+      mobFetch(); // 5초 스로틀 내장
+      if (M.applied === null) { waiting('적용 내역을 조회하는 중…'); return; }
+      carKey = 'M' + location.pathname.split('/')[3];
+      carNo = (document.getElementById('carNo') || {}).value || '-';
+      var dt = document.getElementById('differentTime');
+      rawE = parseDT(dt ? (dt.value || dt.textContent) : '');
+      appliedRaw = M.applied.map(function (a) {
+        return { typeId: String(a.discountTypeId), name: a.discount_name, min: parseFloat(a.dc_time) || 0 };
+      });
+    } else {
+      var mst = window.dataSetMst,
+          peId = (document.getElementById('peId') || {}).value;
+      if (!peId) { S.carId = null; waiting('차량을 조회·선택하세요.'); return; }
+      carKey = peId;
+      var carRow = (mst || []).find ? (mst || []).find(function (r) { return String(r.id) === String(peId); }) : null;
+      carNo = carRow ? carRow.carNo : '-';
+      rawE = carRow ? parseFloat(carRow.incar_min)
+                    : parseDT((document.getElementById('differentTime') || {}).textContent);
+      appliedRaw = (window.dataSetDtl || []).map(function (a) {
+        return { typeId: String(a.discountTypeId), name: a.discount_name, min: parseFloat(a.dc_time) || 0 };
+      });
     }
-    if (S.base === null && now >= S.baseAt) S.base = curApplied().counts;
+    if (rawE == null || isNaN(rawE)) { waiting('경과시간을 읽는 중…'); return; }
 
-    var car = (mst || []).find ? (mst || []).find(function (r) { return String(r.id) === String(peId); }) : null;
-    var rawE = car ? parseFloat(car.incar_min)
-                   : parseDT((document.getElementById('differentTime') || {}).textContent);
-    if (rawE == null || isNaN(rawE)) {
-      setStatus('#6b7280', '대기');
-      el.innerHTML = '<div style="padding:10px;color:#888">경과시간을 읽는 중…</div>';
-      return;
+    // 차량이 바뀌면 추적 리셋. PC 는 상세가 비동기라 base 스냅샷을 1초 늦춘다.
+    if (carKey !== S.carId) {
+      S = { carId: carKey, E: null, seenAt: now, base: null, baseAt: now + (MOB_PAGE ? 0 : 1000) };
     }
     if (rawE !== S.E) { S.E = rawE; S.seenAt = now; } // 사이트가 재조회하면 기준 갱신
     var elapsed = S.E + (now - S.seenAt) / 60000;     // 현재 경과(분, 실시간 보간)
 
-    var ap = curApplied();
-    var covered = BASE_FREE + ap.sum, margin = covered - elapsed;
+    var counts = {}, sum = 0, list = [];
+    appliedRaw.forEach(function (a) {
+      counts[a.typeId] = (counts[a.typeId] || 0) + 1;
+      sum += a.min;
+      list.push(a.name + '(' + a.min + '분)');
+    });
+    if (S.base === null && now >= S.baseAt) S.base = counts;
+
+    var covered = BASE_FREE + sum, margin = covered - elapsed;
 
     // 패널을 연 뒤 새로 적용된 할인 (id→장수)
     var newly = {};
-    if (S.base) Object.keys(ap.counts).forEach(function (id) {
-      var d = ap.counts[id] - (S.base[id] || 0);
+    if (S.base) Object.keys(counts).forEach(function (id) {
+      var d = counts[id] - (S.base[id] || 0);
       if (d > 0) newly[id] = d;
     });
 
     var h = '';
-    h += '<div style="font-size:15px;font-weight:700;margin-bottom:2px">' + (car ? car.carNo : '-') + '</div>';
+    h += '<div style="font-size:15px;font-weight:700;margin-bottom:2px">' + carNo + '</div>';
     h += '<div style="color:#555;margin-bottom:8px">경과 <b>' + fmt(elapsed) + '</b> · 기본무료 ' + BASE_FREE + '분</div>';
     h += '<div style="margin-bottom:4px;color:#555">적용된 할인: ' +
-         (ap.list.length ? ap.list.join(', ') : '<span style="color:#999">없음</span>') +
+         (list.length ? list.join(', ') : '<span style="color:#999">없음</span>') +
          ' · 커버 <b>' + fmt(covered) + '</b></div>';
 
     var appliedCards = Object.keys(newly).map(function (id) {
@@ -261,7 +301,7 @@
       h += appliedCards;
     } else {
       var shortage = elapsed - covered;
-      var freeUsed = (ap.counts[FREE_ID] || 0) >= 1;
+      var freeUsed = (counts[FREE_ID] || 0) >= 1;
       var need = Math.ceil(shortage - (freeUsed ? 0 : byId[FREE_ID].m));
       var combo = best(need);
       var pendCover = (freeUsed ? 0 : byId[FREE_ID].m) + (combo.cover || 0);
@@ -287,10 +327,11 @@
   var old = document.getElementById('__pk_panel');
   if (old) { clearInterval(window.__pk_t); old.remove(); return; } // 다시 누르면 닫기(토글)
 
-  // 모바일(터치) 기기면 하단 시트 형태. 이 사이트는 모바일 뷰포트 설정이 없어
-  // 폰에서 데스크톱처럼 축소 렌더링될 수 있으므로 zoom 으로 읽을 크기로 키운다.
+  // 모바일(터치) 기기면 하단 시트 형태. 사이트에 모바일 뷰포트 설정이 없어
+  // 폰에서 데스크톱처럼 축소 렌더링될 수 있으므로 zoom 으로 키운다.
+  // (모바일 전용 페이지는 뷰포트가 정상이라 zoom 보정이 거의 1에 수렴)
   var MOBILE = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches);
-  var Z = MOBILE ? Math.min(2.8, Math.max(1.3, (window.innerWidth || 400) / 400)) : 1;
+  var Z = MOBILE ? Math.min(2.8, Math.max(1, (window.innerWidth || 400) / 400)) : 1;
 
   var p = document.createElement('div');
   p.id = '__pk_panel';
@@ -304,36 +345,10 @@
     '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
     '<span id="__pk_status" style="font-weight:700">대기</span>' +
     '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
-    '<div id="__pk_upd" style="display:none;padding:8px 12px;background:#b45309;color:#fff;line-height:1.5"></div>' +
     '<div id="__pk_body" style="padding:12px"></div>' +
-    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + '<br>문의: tsusai@msn.com</div>';
+    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
   document.body.appendChild(p);
   document.getElementById('__pk_x').onclick = function () { clearInterval(window.__pk_t); p.remove(); };
-
-  // ── 버전 확인 (패널을 열 때 1회) ─────────────────────────────────
-  // 공개 페이지의 정적 파일 version.json 만 읽는다. 아무 데이터도 보내지
-  // 않으며, 서버가 없거나 실패하면 조용히 넘어간다 — 계산 기능과 무관.
-  try {
-    fetch(HOME + '/version.json', { mode: 'cors', cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (v) {
-        if (!v || !v.version || String(v.version) === VERSION) return;
-        var bar = document.getElementById('__pk_upd');
-        if (!bar) return;
-        if (!document.getElementById('__pk_css')) {
-          var st = document.createElement('style');
-          st.id = '__pk_css';
-          st.textContent = '@keyframes __pk_blink{0%,100%{opacity:1}50%{opacity:.45}}';
-          document.head.appendChild(st);
-        }
-        var page = (typeof v.page === 'string' && /^https:\/\//.test(v.page)) ? v.page : HOME;
-        bar.style.display = 'block';
-        bar.style.animation = '__pk_blink 1.1s infinite';
-        bar.innerHTML = '🔔 새 버전 <b>v' + String(v.version).replace(/[<>&"']/g, '') + '</b> 이 나왔습니다!<br>' +
-          '<a href="' + page + '" target="_blank" rel="noopener" style="color:#fff;font-weight:700">여기서 북마클릿을 새 버전으로 교체하세요 →</a>';
-      })
-      .catch(function () {});
-  } catch (e) {}
 
   // 헤더 드래그로 이동 (데스크톱 전용 — 모바일 하단 시트는 고정)
   if (!MOBILE) (function () {
