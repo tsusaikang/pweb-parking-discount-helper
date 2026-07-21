@@ -40,6 +40,20 @@
   .mock .ft{padding:6px 12px;color:#999;border-top:1px solid #eee}
   .mcard{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin:6px 0;border-radius:8px}
   .chip{display:inline-block;margin-left:6px;padding:0 8px;border-radius:10px;font-weight:800;font-size:14px;color:#fff}
+  /* 휴대폰 설치: 미니 폰 화면 목업 */
+  .steps{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;margin:12px 0 4px}
+  .step{width:150px}
+  .step .ph{border:2px solid #555;border-radius:16px;background:#fff;overflow:hidden}
+  .step .pbar{background:#f1f3f4;padding:5px 8px;font-size:10px;color:#666;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e5e5}
+  .step .pbody{padding:8px;font-size:11px;min-height:112px;background:#fdfdfd}
+  .step .cap{font-size:12px;margin-top:6px;text-align:center;color:#333;line-height:1.5}
+  .hl{outline:2px solid #e02424;outline-offset:1px;border-radius:6px}
+  .pmenu{border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:11px;background:#fff;width:80%;margin-left:auto}
+  .pmenu div{padding:5px 8px;border-bottom:1px solid #f0f0f0}
+  .pmenu div:last-child{border-bottom:none}
+  .pfield{border:1px solid #ccc;border-radius:6px;padding:4px 6px;margin:5px 0;font-size:10px;color:#555;background:#fff;overflow:hidden;white-space:nowrap}
+  .plabel{font-size:9px;color:#999;margin-top:6px}
+  .ptool{display:flex;justify-content:space-around;border-top:1px solid #e5e5e5;padding:5px 0;font-size:13px;color:#555;background:#f8f9fa}
 </style>
 </head>
 <body>
@@ -124,28 +138,136 @@
 
   <div class="card">
     <b>Android · Chrome</b>
-    <ol>
-      <li>아무 페이지에서 <b>⋮ 메뉴 → ☆(북마크 저장)</b></li>
-      <li>⋮ 메뉴 → 북마크 → 방금 저장한 북마크 <b>편집</b> → 이름을 <code>할인계산</code>으로, URL을 <b>복사한 코드로 교체</b></li>
-      <li><b>실행</b>: 할인등록 페이지를 띄운 상태에서 <b>주소창에 “할인계산” 입력</b> → 목록에 뜨는 북마크를 탭</li>
-    </ol>
+    <div class="steps">
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>🔒 pweb.kr</span><span class="hl" style="padding:0 4px;font-weight:700">⋮</span></div>
+          <div class="pbody">
+            <div class="pmenu">
+              <div>새 탭</div>
+              <div class="hl">☆ 북마크 저장</div>
+              <div>공유…</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">① <b>⋮ 메뉴</b>에서<br><b>☆ 북마크 저장</b></div>
+      </div>
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>북마크 편집</span><span>✓</span></div>
+          <div class="pbody">
+            <div class="plabel">이름</div>
+            <div class="pfield">할인계산</div>
+            <div class="plabel">URL — 지우고 복사한 코드 붙여넣기</div>
+            <div class="pfield hl">javascript:(function(){var VER…</div>
+          </div>
+        </div>
+        <div class="cap">② 북마크 <b>편집</b>: 이름은 <code>할인계산</code>,<br>URL은 <b>복사한 코드로 교체</b></div>
+      </div>
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span class="hl" style="padding:1px 6px">할인계산|</span><span>⋮</span></div>
+          <div class="pbody">
+            <div class="pmenu" style="width:95%;margin:0">
+              <div class="hl">🅿️ 할인계산 — 북마크</div>
+              <div style="color:#999">할인계산 검색…</div>
+            </div>
+            <div class="plabel" style="margin-top:10px">※ 할인등록 페이지를 띄운 상태에서</div>
+          </div>
+        </div>
+        <div class="cap">③ 할인등록 화면에서 <b>주소창에<br>“할인계산” 입력</b> → 북마크 탭</div>
+      </div>
+    </div>
     <div class="muted">크롬은 북마크 목록에서 바로 탭하면 실행되지 않을 수 있어, 주소창 방식이 확실합니다.</div>
   </div>
   <div class="card">
     <b>iPhone · Safari</b>
-    <ol>
-      <li>아무 페이지에서 <b>공유 → 즐겨찾기에 추가</b>, 이름 <code>할인계산</code></li>
-      <li>책갈피(📖) → 즐겨찾기 <b>편집</b> → 방금 항목의 URL을 <b>복사한 코드로 교체</b></li>
-      <li><b>실행</b>: 할인등록 페이지에서 책갈피(📖) → <b>할인계산</b> 탭</li>
-    </ol>
+    <div class="steps">
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>pweb.kr</span></div>
+          <div class="pbody">
+            <div class="pmenu" style="width:90%;margin:0 auto">
+              <div>복사</div>
+              <div class="hl">⭐ 즐겨찾기에 추가</div>
+              <div>홈 화면에 추가</div>
+            </div>
+          </div>
+          <div class="ptool"><span>←</span><span>→</span><span class="hl" style="padding:0 5px">⬆</span><span>📖</span></div>
+        </div>
+        <div class="cap">① <b>공유(⬆)</b> →<br><b>즐겨찾기에 추가</b>, 이름 <code>할인계산</code></div>
+      </div>
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>즐겨찾기 편집</span><span>완료</span></div>
+          <div class="pbody">
+            <div class="plabel">이름</div>
+            <div class="pfield">할인계산</div>
+            <div class="plabel">주소 — 지우고 복사한 코드 붙여넣기</div>
+            <div class="pfield hl">javascript:(function(){var VER…</div>
+          </div>
+        </div>
+        <div class="cap">② <b>책갈피(📖) → 편집</b>에서<br>URL을 <b>복사한 코드로 교체</b></div>
+      </div>
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>즐겨찾기</span></div>
+          <div class="pbody">
+            <div class="pmenu" style="width:95%;margin:0">
+              <div>⭐ 자주 가는 곳</div>
+              <div class="hl">🅿️ 할인계산</div>
+            </div>
+            <div class="plabel" style="margin-top:10px">※ 할인등록 페이지를 띄운 상태에서</div>
+          </div>
+          <div class="ptool"><span>←</span><span>→</span><span>⬆</span><span class="hl" style="padding:0 5px">📖</span></div>
+        </div>
+        <div class="cap">③ 할인등록 화면에서<br><b>📖 → 할인계산</b> 탭</div>
+      </div>
+    </div>
   </div>
   <div class="card">
     <b>삼성 인터넷</b>
-    <ol>
-      <li>아무 페이지에서 <b>메뉴 → 페이지 추가 → 북마크</b></li>
-      <li>북마크 목록에서 방금 항목 <b>편집</b> → 이름 <code>할인계산</code>, URL을 <b>복사한 코드로 교체</b></li>
-      <li><b>실행</b>: 할인등록 페이지를 띄운 채 북마크 목록에서 <b>할인계산</b> 탭. 안 되면 주소창에 “할인계산”을 입력해 선택</li>
-    </ol>
+    <div class="steps">
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>pweb.kr</span></div>
+          <div class="pbody">
+            <div class="pmenu">
+              <div>다운로드</div>
+              <div class="hl">➕ 페이지 추가 → 북마크</div>
+              <div>공유</div>
+            </div>
+          </div>
+          <div class="ptool"><span>←</span><span>→</span><span>🏠</span><span class="hl" style="padding:0 5px">☰</span></div>
+        </div>
+        <div class="cap">① <b>☰ 메뉴</b> →<br><b>페이지 추가 → 북마크</b></div>
+      </div>
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>북마크 편집</span><span>저장</span></div>
+          <div class="pbody">
+            <div class="plabel">이름</div>
+            <div class="pfield">할인계산</div>
+            <div class="plabel">URL — 지우고 복사한 코드 붙여넣기</div>
+            <div class="pfield hl">javascript:(function(){var VER…</div>
+          </div>
+        </div>
+        <div class="cap">② 북마크 목록에서 <b>편집</b>:<br>URL을 <b>복사한 코드로 교체</b></div>
+      </div>
+      <div class="step">
+        <div class="ph">
+          <div class="pbar"><span>북마크</span></div>
+          <div class="pbody">
+            <div class="pmenu" style="width:95%;margin:0">
+              <div>📁 즐겨찾기</div>
+              <div class="hl">🅿️ 할인계산</div>
+            </div>
+            <div class="plabel" style="margin-top:10px">※ 할인등록 페이지를 띄운 상태에서</div>
+          </div>
+        </div>
+        <div class="cap">③ 할인등록 화면에서 북마크 목록의<br><b>할인계산</b> 탭 (안 되면 주소창에 입력)</div>
+      </div>
+    </div>
   </div>
   <div class="muted">이 페이지 주소를 카톡 등으로 공유하면, 받은 사람도 휴대폰에서 바로 이 복사 버튼을 쓸 수 있습니다.</div>
 
