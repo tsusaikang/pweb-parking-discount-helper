@@ -36,7 +36,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.21.2';                 // 배포 버전 — version.json 과 함께 갱신할 것
+  var VERSION = '2026.07.21.3';                 // 배포 버전 — version.json 과 함께 갱신할 것
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper'; // 공개 배포 페이지 (2026-07-21 확정)
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -167,6 +167,9 @@
   var S = { carId: null, E: null, seenAt: 0, base: null, baseAt: 0 };
 
   function card(t, cnt, applied) {
+    // 몇 장인지가 핵심 정보라 배지로 강조한다 (1장이어도 표시)
+    var chip = '<span style="display:inline-block;margin-left:6px;padding:0 8px;border-radius:10px;font-weight:800;font-size:14px;color:#fff;background:' +
+      (applied ? '#137a3f' : '#b26a00') + '">' + cnt + '장</span>';
     var right = applied
       ? '<span style="color:#137a3f;font-weight:700;white-space:nowrap">✓ 적용됨</span>'
       : '<span style="color:#b26a00;font-weight:700;white-space:nowrap">적용 필요</span>';
@@ -174,7 +177,7 @@
       ? 'border:1px solid #86d9a8;background:#e6f7ed'
       : 'border:1px solid #f0c36d;background:#fff8e8';
     return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin:6px 0;border-radius:8px;' + style + '">' +
-      '<div><b>' + t.n + '</b>' + (cnt > 1 ? ' ×' + cnt : '') +
+      '<div><b>' + t.n + '</b>' + chip +
       '<span style="color:#888;margin-left:6px">' + (t.m * cnt) + '분 · ' + (t.p * cnt).toLocaleString() + '원</span></div>' +
       right + '</div>';
   }
@@ -303,7 +306,7 @@
     '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
     '<div id="__pk_upd" style="display:none;padding:8px 12px;background:#b45309;color:#fff;line-height:1.5"></div>' +
     '<div id="__pk_body" style="padding:12px"></div>' +
-    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + '</div>';
+    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + '<br>문의: tsusai@msn.com</div>';
   document.body.appendChild(p);
   document.getElementById('__pk_x').onclick = function () { clearInterval(window.__pk_t); p.remove(); };
 
