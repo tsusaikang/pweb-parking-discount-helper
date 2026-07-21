@@ -66,6 +66,20 @@ fetch 해 `VERSION` 상수와 다르면 패널 상단에 깜빡이는(👉 `__pk
 version.json 은 구버전(코드 내장형) 사용자에게 재설치 배너를 띄우는 용도로만
 유지 — 값은 app.js 의 VERSION 과 계속 맞춰 둔다.
 
+## 유저스크립트 방식 추가 (2026-07-21, feature/userscript 브랜치)
+
+모바일에서 북마클릿 실행(주소창에 이름 입력)이 매번 번거롭다는 피드백.
+`pweb-parking-calc.user.js` = app.js 를 로드하는 Tampermonkey 래퍼 —
+설치하면 할인등록 화면을 열 때 **패널이 자동으로 뜬다**. `@match *.pweb.kr/*`
+이지만 코드에서 지원 경로(PC·모바일 할인등록)일 때만 동작(로그인 페이지 등에선
+침묵). `@updateURL` 로 래퍼 자체도 자동 갱신. 로직·UI·가드는 전부 app.js 재사용.
+
+- Android: **Edge**(2025-03부터 확장 정식 지원, Tampermonkey 목록에 있음)·Firefox.
+  **크롬 안드로이드는 확장 미지원**(계획도 폰은 없음) → 북마클릿(방법 B) 유지.
+- iPhone: Safari + 무료 "Userscripts" 앱.
+- 삼성 인터넷 안내는 제외 (2026-07-21 사용자 결정 — index.html 카드도 삭제).
+- CLAUDE.md 의 "Tampermonkey 안 씀"은 **회사 PC** 제약 얘기 — 개인 폰엔 무관.
+
 ## 모바일 할인등록 화면 지원 (2026-07-21 조사·구현)
 
 모바일은 PC 와 **완전히 다른 페이지**다 (jQuery Mobile):
