@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pweb 주차할인 계산기 · 설치</title>
+<title>pweb 주차할인 계산기 — 0원까지 몇 장 더? 자동 계산 북마클릿</title>
+<meta name="description" content="pweb.kr 주차 할인등록 화면에서 '0원까지 할인권을 몇 장 더 적용해야 하는지'를 자동 계산해 주는 무료 북마클릿. PC·휴대폰 설치법 안내. 외부 전송 없음, 비공식 보조 도구.">
+<link rel="canonical" href="https://tsusai.github.io/pweb-parking/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="pweb 주차할인 계산기">
+<meta property="og:description" content="0원까지 할인권을 몇 장 더 적용해야 하는지 자동 계산. 카드로 보여주고, 적용하면 ✓ 체크. PC·휴대폰 지원.">
+<meta property="og:url" content="https://tsusai.github.io/pweb-parking/">
+<meta property="og:locale" content="ko_KR">
 <style>
   body{font-family:-apple-system,"Malgun Gothic",sans-serif;max-width:760px;margin:0 auto;padding:28px 20px 80px;color:#222;line-height:1.65}
   h1{font-size:24px;margin:0 0 4px}
@@ -124,7 +131,7 @@
 <script type="text/plain" id="src">
 (function () {
   var VERSION = '2026.07.21';                 // 배포 버전 — version.json 과 함께 갱신할 것
-  var HOME = 'https://pweb-parking-help.kr';  // 공개 배포 페이지 (도메인 확정 시 수정)
+  var HOME = 'https://tsusai.github.io/pweb-parking'; // 공개 배포 페이지 (2026-07-21 확정)
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정

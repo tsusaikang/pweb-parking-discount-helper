@@ -36,12 +36,12 @@
 
 | 파일 | 설명 |
 |---|---|
-| `install.html` | 설치·사용 안내 페이지. 북마클릿을 즐겨찾기로 끌어다 놓거나, 폰에서 코드를 복사해 등록. 원본 스크립트를 런타임에 `javascript:` URL로 조립합니다. |
+| `index.html` | 설치·사용 안내 페이지(공개: <https://tsusai.github.io/pweb-parking>). 북마클릿을 즐겨찾기로 끌어다 놓거나, 폰에서 코드를 복사해 등록. 원본 스크립트를 런타임에 `javascript:` URL로 조립합니다. |
 | `bookmarklet-source.js` | 같은 스크립트의 주석 달린 읽기용 원본. **두 파일의 로직은 항상 같아야 합니다 — 고칠 땐 둘 다.** |
 
 ## 설치
 
-`install.html`을 브라우저로 열어 안내를 따르면 됩니다(PC는 즐겨찾기 바로 드래그, 폰은 코드 복사 후 북마크 URL 교체).
+<https://tsusai.github.io/pweb-parking> 에 접속해(또는 `index.html`을 브라우저로 열어) 안내를 따르면 됩니다(PC는 즐겨찾기 바로 드래그, 폰은 코드 복사 후 북마크 URL 교체).
 
 ---
 
