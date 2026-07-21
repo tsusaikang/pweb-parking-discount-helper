@@ -37,7 +37,7 @@
  */
 (function () {
   var VERSION = '2026.07.21';                 // 배포 버전 — version.json 과 함께 갱신할 것
-  var HOME = 'https://tsusai.github.io/pweb-parking'; // 공개 배포 페이지 (2026-07-21 확정)
+  var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper'; // 공개 배포 페이지 (2026-07-21 확정)
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정

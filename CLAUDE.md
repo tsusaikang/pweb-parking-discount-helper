@@ -45,7 +45,7 @@ Tampermonkey 유저스크립트는 회사 PC 에 설치가 어려울 수 있어 
 
 ## 공개 배포·버전 알림 (2026-07-21 사용자 요청)
 
-index.html 을 `https://tsusai.github.io/pweb-parking` 에 올려 배포한다
+index.html 을 `https://tsusaikang.github.io/pweb-parking-discount-helper` 에 올려 배포한다
 (2026-07-21 확정 — GitHub Pages 서브도메인. 커스텀 도메인 대비 만료·탈취 위험이
 없고 무료라서 선택. version.json CORS 는 GitHub Pages 가 기본 허용).
 북마클릿은 자동 업데이트가 불가능하므로: 패널을 열 때 1회 `HOME/version.json` 을
