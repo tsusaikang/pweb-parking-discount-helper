@@ -54,6 +54,10 @@
   .pfield{border:1px solid #ccc;border-radius:6px;padding:4px 6px;margin:5px 0;font-size:10px;color:#555;background:#fff;overflow:hidden;white-space:nowrap}
   .plabel{font-size:9px;color:#999;margin-top:6px}
   .ptool{display:flex;justify-content:space-around;border-top:1px solid #e5e5e5;padding:5px 0;font-size:13px;color:#555;background:#f8f9fa}
+  /* 휴대폰 설치: 큰 2단계 */
+  .bigstep{border:2px solid #2b3a67;border-radius:14px;padding:16px 18px;margin:18px 0;background:#fff}
+  .bigstep .bh{font-size:17px;font-weight:800;display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .bignum{width:30px;height:30px;border-radius:50%;background:#2b3a67;color:#fff;font-size:16px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
 </style>
 </head>
 <body>
@@ -131,10 +135,22 @@
   </div>
 
   <h2>4. 설치 — 휴대폰</h2>
-  <p>휴대폰은 끌어다 놓기가 안 되므로, 아래 코드를 <b>복사</b>해서 북마크 URL 칸에 붙여넣습니다.
-     북마크 이름은 짧게 <code>할인계산</code>을 추천합니다(주소창에 치기 편함).</p>
-  <textarea class="copybox" id="raw" readonly></textarea>
-  <button class="copy" id="copyBtn">📋 코드 전체 복사</button>
+  <p style="font-size:16px">휴대폰 설치는 <b>딱 두 단계</b>입니다:
+     <b>① 코드 복사</b> → <b>② 북마크에 붙여넣기</b>. 이게 전부입니다.</p>
+
+  <div class="bigstep">
+    <div class="bh"><span class="bignum">1</span>먼저, 코드를 복사하세요</div>
+    <p style="margin:4px 0 0">아래 버튼 한 번이면 됩니다. 복사만 되면 절반은 끝났습니다.</p>
+    <textarea class="copybox" id="raw" readonly></textarea>
+    <button class="copy" id="copyBtn">📋 코드 전체 복사</button>
+  </div>
+
+  <div class="bigstep">
+    <div class="bh"><span class="bignum">2</span>그다음, 복사한 코드를 북마크에 붙여넣으세요</div>
+    <p style="margin:4px 0 0">새 북마크를 하나 만들고 → <b>URL 칸에 방금 복사한 코드를 붙여넣고</b> →
+       이름을 <code>할인계산</code>으로 바꾸면 설치 끝입니다.<br>
+       <span class="muted">아래 세 개는 이 <b>"붙여넣는 방법"</b>을 브라우저별로 그림으로 보여주는 것뿐입니다 —
+       <b>본인이 쓰는 브라우저 하나만</b> 보면 됩니다.</span></p>
 
   <div class="card">
     <b>Android · Chrome</b>
@@ -269,6 +285,7 @@
       </div>
     </div>
   </div>
+  </div><!-- /2단계 -->
   <div class="muted">이 페이지 주소를 카톡 등으로 공유하면, 받은 사람도 휴대폰에서 바로 이 복사 버튼을 쓸 수 있습니다.</div>
 
   <h2>5. 사용법 — 딱 세 단계</h2>
