@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.3';
+  var VERSION = '2026.07.22.4';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -39,7 +39,10 @@
 
   // 화면 모드
   var ON_PWEB = /(^|\.)pweb\.kr$/i.test(location.hostname);
-  var PC_PAGE = location.pathname.indexOf('/discount/registration') === 0;
+  // jQuery Mobile 마커 — 모바일 조회 화면 등이 PC 경로(/discount/registration…)와
+  // 접두어를 공유할 수 있어, JQM 이면 PC 화면으로 취급하지 않는다 (오탐 방지)
+  var JQM = !!document.querySelector('[data-role="page"], .ui-page');
+  var PC_PAGE = location.pathname.indexOf('/discount/registration') === 0 && !JQM;
   var MOB_PAGE = location.pathname.indexOf('/discount/doViewRegistrationDscnt') === 0;
 
   // 부족한 need(분)을 최소 비용으로 덮는 유료권 조합 (DP). items 는 id→장수
@@ -208,7 +211,9 @@
     var head = document.getElementById('__pk_head'),
         st = document.getElementById('__pk_status');
     if (head) head.style.background = color;
-    if (st) st.textContent = text;
+    if (st) st.textContent = MOBILE
+      ? text.replace('0원 완료', '완료').replace('적용 필요', '부족').replace('사용 금지', '금지')
+      : text;
   }
 
   function waiting(msg) {
@@ -281,12 +286,12 @@
       if (d > 0) newly[id] = d;
     });
 
-    // ── 모바일: 최소 정보 레이아웃 (2026-07-21 사용자 요청 — 화면 가림 최소화) ──
+    // ── 모바일: 우측 세로 도크용 최소 정보 레이아웃 (2026-07-21 사용자 요청) ──
     // 페이지에 이미 보이는 차량번호·주차시간 등은 생략. 상태 + 핵심 수치 +
-    // 권종 칩(몇 장) + 비용·만료시각만 표시한다.
+    // 권종 칩(몇 장) + 비용·만료시각을 세로로 쌓는다.
     if (MOBILE) {
       var mchip = function (t, cnt, done) {
-        return '<span style="display:inline-block;margin:3px 4px 0 0;padding:3px 10px;border-radius:14px;font-weight:800;font-size:13px;' +
+        return '<span style="display:block;margin:4px 0;padding:3px 2px;border-radius:9px;font-weight:800;font-size:11px;text-align:center;' +
           (done ? 'background:#e6f7ed;border:1px solid #86d9a8;color:#137a3f'
                 : 'background:#fff8e8;border:1px solid #f0c36d;color:#8a5a00') + '">' +
           (done ? '✓ ' : '') + t.n + ' ×' + cnt + '</span>';
@@ -297,9 +302,12 @@
       var mh;
       if (margin >= 0) {
         setStatus('#137a3f', '✓ 0원 완료');
-        mh = '<div style="text-align:center;font-size:18px;font-weight:800;color:#0c5a2e">✅ ' +
-             fmt(margin) + ' 남음 · <span style="color:#137a3f">' + clock(now + margin * 60000) + '까지 0원</span></div>' +
-             (doneChips ? '<div style="margin-top:4px;text-align:center">' + doneChips + '</div>' : '');
+        mh = '<div style="text-align:center;font-weight:800;color:#0c5a2e">' +
+             '<div style="font-size:14px">✅ 0원</div>' +
+             '<div style="font-size:15px;margin-top:3px">' + fmt(margin) + '</div>' +
+             '<div style="font-size:11px;color:#137a3f;font-weight:700">남음</div>' +
+             '<div style="font-size:12px;margin-top:5px;color:#137a3f"><b>' + clock(now + margin * 60000) + '</b>까지</div></div>' +
+             doneChips;
       } else {
         var mShort = elapsed - covered;
         var mFreeUsed = (counts[FREE_ID] || 0) >= 1;
@@ -311,10 +319,12 @@
             return (mCombo.items && mCombo.items[t.id]) ? mchip(t, mCombo.items[t.id], false) : '';
           }).join('');
         setStatus('#c0392b', '⚠ 적용 필요');
-        mh = '<div style="text-align:center;font-size:18px;font-weight:800;color:#96281b">⚠ 부족 ' + fmt(mShort) + '</div>' +
-             '<div style="margin-top:4px;text-align:center">' + doneChips + pendChips + '</div>' +
-             '<div style="margin-top:5px;text-align:center;color:#555">' + (mCombo.cost || 0).toLocaleString() +
-             '원 · 적용 후 <b>' + clock(now + mMargin * 60000) + '</b>까지 0원</div>';
+        mh = '<div style="text-align:center;font-weight:800;color:#96281b">' +
+             '<div style="font-size:13px">⚠ 부족</div>' +
+             '<div style="font-size:16px;margin-top:2px">' + fmt(mShort) + '</div></div>' +
+             '<div style="margin-top:5px">' + doneChips + pendChips + '</div>' +
+             '<div style="text-align:center;color:#555;font-size:11px;margin-top:5px">' + (mCombo.cost || 0).toLocaleString() + '원<br>' +
+             '적용 후 <b>' + clock(now + mMargin * 60000) + '</b>까지</div>';
       }
       el.innerHTML = mh;
       return;
@@ -366,58 +376,78 @@
   var old = document.getElementById('__pk_panel');
   if (old) { // 다시 누르면 닫기(토글)
     clearInterval(window.__pk_t);
-    document.body.style.paddingBottom = window.__pk_pad0 || '';
+    document.body.style.paddingRight = window.__pk_pad0 || '';
     old.remove(); return;
   }
 
-  // 모바일(터치) 기기면 하단 시트 형태. 사이트에 모바일 뷰포트 설정이 없어
-  // 폰에서 데스크톱처럼 축소 렌더링될 수 있으므로 zoom 으로 키운다.
-  // (모바일 전용 페이지는 뷰포트가 정상이라 zoom 보정이 거의 1에 수렴)
+  // 자동 실행(유저스크립트)으로 불렸을 때: 지원 화면이 아니면 조용히 물러난다
+  // (조회 화면·로그인·다른 메뉴에서 패널이 뜨지 않게. 북마클릿 클릭은 항상 표시)
+  if (window.__pk_auto && !(ON_PWEB && (PC_PAGE || MOB_PAGE))) return;
+
+  // 모바일(터치) 기기면 우측 세로 도크(화면 폭의 ~29%). 하단 시트는 페이지의
+  // 할인 버튼을 가려서 폐기(2026-07-21). 데스크톱 레이아웃으로 렌더되는 페이지
+  // 대비 zoom 보정 유지 (모바일 전용 페이지는 뷰포트가 정상이라 Z≈1).
   var MOBILE = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches);
   var Z = MOBILE ? Math.min(2.8, Math.max(1, (window.innerWidth || 400) / 400)) : 1;
+  var dockRender = Math.min(170, Math.max(104, (window.innerWidth || 400) * 0.29)); // 화면상 실제 폭
+  var DOCKW = Math.round(dockRender / Z); // zoom 반영한 style 폭
 
   var p = document.createElement('div');
   p.id = '__pk_panel';
   p.style.cssText = (MOBILE
-    ? 'position:fixed;left:0;right:0;bottom:0;border-radius:14px 14px 0 0;border-bottom:none;box-shadow:0 -6px 24px rgba(0,0,0,.25);max-height:' + Math.round(70 / Z) + 'vh;overflow:auto;zoom:' + Z
-    : 'position:fixed;top:16px;right:16px;width:320px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.18)') +
-    ';z-index:2147483647;background:#fff;border:1px solid #ccc;font-family:-apple-system,"Malgun Gothic",sans-serif;font-size:13px;color:#222';
-  p.innerHTML =
-    '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:' +
-    (MOBILE ? '14px 14px 0 0' : '12px 12px 0 0') + ';' + (MOBILE ? '' : 'cursor:move;') + 'transition:background .3s">' +
-    '<b>' + (MOBILE ? '할인계산' : 'pweb 주차할인 계산기') + '</b><span style="display:flex;align-items:center;gap:10px">' +
-    '<span id="__pk_status" style="font-weight:700">대기</span>' +
-    '<span id="__pk_min" style="cursor:pointer;font-size:16px;padding:2px 6px">▾</span>' +
-    '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
-    '<div id="__pk_body" style="padding:' + (MOBILE ? '8px 12px 10px' : '12px') + '"></div>' +
-    '<div id="__pk_foot" style="' + (MOBILE ? 'display:none;' : '') + 'padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
+    ? 'position:fixed;top:0;right:0;bottom:0;width:' + DOCKW + 'px;border-left:1px solid #ccc;box-shadow:-4px 0 18px rgba(0,0,0,.2);overflow-y:auto;overflow-x:hidden;zoom:' + Z + ';font-size:12px'
+    : 'position:fixed;top:16px;right:16px;width:320px;border-radius:12px;border:1px solid #ccc;box-shadow:0 6px 24px rgba(0,0,0,.18);font-size:13px') +
+    ';z-index:2147483647;background:#fff;font-family:-apple-system,"Malgun Gothic",sans-serif;color:#222';
+  p.innerHTML = MOBILE
+    ? '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;gap:2px;padding:6px 5px;background:#6b7280;color:#fff;transition:background .3s">' +
+      '<span id="__pk_status" style="font-weight:700;font-size:12px;white-space:nowrap">대기</span>' +
+      '<span style="display:flex;align-items:center">' +
+      '<span id="__pk_min" style="cursor:pointer;font-size:15px;padding:2px 3px">▸</span>' +
+      '<span id="__pk_x" style="cursor:pointer;font-size:15px;padding:2px 3px">✕</span></span></div>' +
+      '<div id="__pk_body" style="padding:8px 6px"></div>' +
+      '<div id="__pk_foot" style="display:none"></div>'
+    : '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:12px 12px 0 0;cursor:move;transition:background .3s">' +
+      '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
+      '<span id="__pk_status" style="font-weight:700">대기</span>' +
+      '<span id="__pk_min" style="cursor:pointer;font-size:16px;padding:2px 6px">▾</span>' +
+      '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
+      '<div id="__pk_body" style="padding:12px"></div>' +
+      '<div id="__pk_foot" style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
   document.body.appendChild(p);
 
-  // 모바일: 패널이 페이지 아래쪽을 가리지 않도록, 패널 높이만큼
-  // 본문 하단 여백을 만들어 준다 (스크롤하면 전부 보임). 닫으면 원복.
-  window.__pk_pad0 = document.body.style.paddingBottom;
+  // 모바일: 도크 폭만큼 본문 오른쪽 여백을 만들어 가려지는 영역이 없게 한다. 닫으면 원복.
+  window.__pk_pad0 = document.body.style.paddingRight;
   function syncPad() {
     if (!MOBILE) return;
-    try { document.body.style.paddingBottom = Math.ceil(p.getBoundingClientRect().height + 12) + 'px'; } catch (e) {}
+    try { document.body.style.paddingRight = Math.ceil(p.getBoundingClientRect().width + 4) + 'px'; } catch (e) {}
   }
 
   document.getElementById('__pk_x').onclick = function () {
     clearInterval(window.__pk_t);
-    document.body.style.paddingBottom = window.__pk_pad0 || '';
+    document.body.style.paddingRight = window.__pk_pad0 || '';
     p.remove();
   };
 
-  // 접기/펴기 — 접으면 헤더(상태 배지)만 남아 페이지 조작이 편하다
+  // 접기/펴기 — 모바일 도크는 얇은 띠(상태색만 보임)로, 데스크톱은 헤더만 남긴다
   var minimized = false;
   document.getElementById('__pk_min').onclick = function () {
     minimized = !minimized;
     document.getElementById('__pk_body').style.display = minimized ? 'none' : '';
-    document.getElementById('__pk_foot').style.display = minimized ? 'none' : '';
-    this.textContent = minimized ? '▴' : '▾';
+    document.getElementById('__pk_foot').style.display = (minimized || MOBILE) ? 'none' : '';
+    if (MOBILE) {
+      p.style.width = (minimized ? Math.ceil(34 / Z) : DOCKW) + 'px';
+      var st = document.getElementById('__pk_status');
+      var xb = document.getElementById('__pk_x');
+      if (st) st.style.display = minimized ? 'none' : '';
+      if (xb) xb.style.display = minimized ? 'none' : '';
+      this.textContent = minimized ? '◂' : '▸';
+    } else {
+      this.textContent = minimized ? '▴' : '▾';
+    }
     syncPad();
   };
 
-  // 헤더 드래그로 이동 (데스크톱 전용 — 모바일 하단 시트는 고정)
+  // 헤더 드래그로 이동 (데스크톱 전용 — 모바일 도크는 고정)
   if (!MOBILE) (function () {
     var head = document.getElementById('__pk_head'), sx, sy, ox, oy, drag = false;
     head.addEventListener('mousedown', function (e) {

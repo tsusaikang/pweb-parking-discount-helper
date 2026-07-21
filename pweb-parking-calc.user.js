@@ -24,6 +24,7 @@
   var path = location.pathname;
   if (path.indexOf('/discount/registration') !== 0 &&
       path.indexOf('/discount/doViewRegistrationDscnt') !== 0) return; // 지원 화면에서만
+  window.__pk_auto = true; // 자동 실행 표시 — app.js 가 지원 화면이 아니면 침묵한다
   var s = document.createElement('script');
   s.src = 'https://tsusaikang.github.io/pweb-parking-discount-helper/app.js?t=' + Date.now();
   s.onerror = function () { console.warn('[pweb 주차할인 계산기] app.js 로드 실패 — 인터넷 연결 확인'); };

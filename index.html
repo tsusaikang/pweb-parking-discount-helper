@@ -362,6 +362,7 @@
      URL 길이 한계 해결 + 수동 업데이트 제거). 아무 데이터도 보내지 않는다. -->
 <script type="text/plain" id="src">
 (function () {
+  window.__pk_auto = false; // 사용자가 직접 클릭 — 항상 패널(안내 포함)을 띄운다
   var s = document.createElement('script');
   s.src = 'https://tsusaikang.github.io/pweb-parking-discount-helper/app.js?t=' + Date.now();
   s.onerror = function () { alert('주차할인 계산기를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'); };
