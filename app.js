@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.4';
+  var VERSION = '2026.07.22.5';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -395,11 +395,12 @@
   var p = document.createElement('div');
   p.id = '__pk_panel';
   p.style.cssText = (MOBILE
-    ? 'position:fixed;top:0;right:0;bottom:0;width:' + DOCKW + 'px;border-left:1px solid #ccc;box-shadow:-4px 0 18px rgba(0,0,0,.2);overflow-y:auto;overflow-x:hidden;zoom:' + Z + ';font-size:12px'
-    : 'position:fixed;top:16px;right:16px;width:320px;border-radius:12px;border:1px solid #ccc;box-shadow:0 6px 24px rgba(0,0,0,.18);font-size:13px') +
-    ';z-index:2147483647;background:#fff;font-family:-apple-system,"Malgun Gothic",sans-serif;color:#222';
+    // 떠 있는 라운드 반투명 박스 (꽉 채우지 않기 — 2026-07-21 사용자 요청)
+    ? 'position:fixed;top:' + Math.round(60 / Z) + 'px;right:' + Math.round(6 / Z) + 'px;width:' + DOCKW + 'px;max-height:' + Math.round(78 / Z) + 'vh;border:1px solid rgba(0,0,0,.15);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.25);overflow-y:auto;overflow-x:hidden;zoom:' + Z + ';font-size:12px;background:rgba(255,255,255,.86);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)'
+    : 'position:fixed;top:16px;right:16px;width:320px;border-radius:12px;border:1px solid #ccc;box-shadow:0 6px 24px rgba(0,0,0,.18);font-size:13px;background:#fff') +
+    ';z-index:2147483647;font-family:-apple-system,"Malgun Gothic",sans-serif;color:#222';
   p.innerHTML = MOBILE
-    ? '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;gap:2px;padding:6px 5px;background:#6b7280;color:#fff;transition:background .3s">' +
+    ? '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;gap:2px;padding:6px 5px;background:#6b7280;color:#fff;border-radius:11px 11px 0 0;transition:background .3s">' +
       '<span id="__pk_status" style="font-weight:700;font-size:12px;white-space:nowrap">대기</span>' +
       '<span style="display:flex;align-items:center">' +
       '<span id="__pk_min" style="cursor:pointer;font-size:15px;padding:2px 3px">▸</span>' +
