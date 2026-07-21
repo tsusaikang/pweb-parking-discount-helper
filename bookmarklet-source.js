@@ -36,7 +36,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.21.3';                 // 배포 버전 — version.json 과 함께 갱신할 것
+  var VERSION = '2026.07.21.4';                 // 배포 버전 — version.json 과 함께 갱신할 것
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper'; // 공개 배포 페이지 (2026-07-21 확정)
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -339,8 +339,12 @@
   if (!MOBILE) (function () {
     var head = document.getElementById('__pk_head'), sx, sy, ox, oy, drag = false;
     head.addEventListener('mousedown', function (e) {
+      if (e.target && e.target.id === '__pk_x') return; // 닫기 버튼은 드래그 시작 금지
       drag = true; sx = e.clientX; sy = e.clientY;
       var r = p.getBoundingClientRect(); ox = r.left; oy = r.top;
+      // right 를 풀기 전에 left/top 을 현재 위치로 고정 — 안 그러면 패널이
+      // 정적 위치(좌상단)로 점프해 click 이 무효가 되는 버그가 있었다
+      p.style.left = r.left + 'px'; p.style.top = r.top + 'px';
       p.style.right = 'auto'; e.preventDefault();
     });
     document.addEventListener('mousemove', function (e) {
