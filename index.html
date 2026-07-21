@@ -64,16 +64,48 @@
   <p>아래 파란 버튼을 <b>마우스 왼쪽 버튼으로 누른 채</b> 그대로 화면 위쪽
      <b>북마크 바</b>(주소창 바로 아래 가로줄)까지 <b>끌고 가서 놓으세요</b>.
      북마크 바에 <b>🅿️할인계산</b> 항목이 새로 생기면 그게 설치 완료입니다 — 클릭·회원가입·설치 프로그램 전부 없습니다.</p>
-  <svg viewBox="0 0 420 158" style="max-width:420px;width:100%;display:block;margin:8px 0" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="파란 버튼을 북마크 바로 끌어다 놓는 그림">
+  <svg viewBox="0 0 460 300" style="max-width:460px;width:100%;display:block;margin:8px 0" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="파란 버튼을 브라우저 북마크 바로 끌어다 놓는 그림">
     <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#e02424"/></marker></defs>
-    <rect x="5" y="5" width="410" height="28" rx="6" fill="#f1f3f4" stroke="#ddd"/>
-    <text x="18" y="24" font-size="12" fill="#999">🔒 주소창</text>
-    <rect x="5" y="38" width="410" height="26" rx="5" fill="#e8f0fe" stroke="#aecbfa"/>
-    <text x="15" y="55" font-size="12" fill="#1a56db">북마크 바 ← ② 여기에 놓기 (🅿️할인계산 생김)</text>
-    <rect x="150" y="112" width="120" height="34" rx="8" fill="#2b3a67"/>
-    <text x="210" y="134" font-size="13" fill="#fff" text-anchor="middle">🅿️할인계산</text>
-    <path d="M210,110 C210,95 210,85 210,72" stroke="#e02424" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
-    <text x="222" y="95" font-size="12" fill="#e02424">① 누른 채 끌기</text>
+    <!-- 브라우저 창 -->
+    <rect x="5" y="5" width="450" height="290" rx="10" fill="#fff" stroke="#bbb"/>
+    <!-- 탭 줄 + 창 조절 버튼 -->
+    <path d="M5,15 a10,10 0 0 1 10,-10 h420 a10,10 0 0 1 10,10 v25 h-440 z" fill="#dee1e6"/>
+    <path d="M15,40 v-20 a8,8 0 0 1 8,-8 h114 a8,8 0 0 1 8,8 v20 z" fill="#fff"/>
+    <circle cx="30" cy="26" r="5" fill="#4a90d9"/>
+    <text x="42" y="30" font-size="11" fill="#333">주차 할인등록</text>
+    <text x="386" y="29" font-size="13" fill="#666">—</text>
+    <text x="408" y="29" font-size="12" fill="#666">▢</text>
+    <text x="430" y="29" font-size="13" fill="#666">✕</text>
+    <!-- 주소창 줄 -->
+    <text x="18" y="59" font-size="13" fill="#777">←</text>
+    <text x="38" y="59" font-size="13" fill="#bbb">→</text>
+    <text x="58" y="59" font-size="12" fill="#777">⟳</text>
+    <rect x="76" y="45" width="300" height="20" rx="10" fill="#f1f3f4"/>
+    <text x="88" y="59" font-size="11" fill="#555">🔒 a23021.pweb.kr</text>
+    <text x="388" y="60" font-size="13" fill="#777">☆</text>
+    <!-- 북마크 바 -->
+    <line x1="5" y1="70" x2="455" y2="70" stroke="#eee"/>
+    <text x="18" y="87" font-size="11" fill="#444">📁 업무</text>
+    <text x="72" y="87" font-size="11" fill="#444">⭐ 지도</text>
+    <text x="126" y="87" font-size="11" fill="#444">⭐ 메일</text>
+    <!-- 놓을 자리(점선) + 반투명 유령 버튼 -->
+    <rect x="180" y="73" width="112" height="21" rx="6" fill="none" stroke="#e02424" stroke-dasharray="4 3" stroke-width="1.5"/>
+    <rect x="183" y="75" width="106" height="17" rx="5" fill="#2b3a67" opacity="0.4"/>
+    <text x="236" y="87" font-size="10" fill="#fff" text-anchor="middle">🅿️할인계산</text>
+    <line x1="5" y1="97" x2="455" y2="97" stroke="#e0e0e0"/>
+    <text x="300" y="88" font-size="11" fill="#e02424" font-weight="bold">② 여기에 놓기</text>
+    <!-- 콘텐츠 영역 -->
+    <rect x="6" y="98" width="448" height="196" rx="0" fill="#fafafa"/>
+    <text x="18" y="118" font-size="11" fill="#e02424">↑ 이 가로줄이 ‘북마크 바’입니다</text>
+    <!-- 드래그 경로: 버튼 → 유령 버튼(중간) → 북마크 바 -->
+    <rect x="170" y="240" width="120" height="34" rx="8" fill="#2b3a67"/>
+    <text x="230" y="262" font-size="13" fill="#fff" text-anchor="middle">🅿️할인계산</text>
+    <rect x="196" y="160" width="106" height="26" rx="7" fill="#2b3a67" opacity="0.45" transform="rotate(-6 249 173)"/>
+    <text x="249" y="177" font-size="11" fill="#fff" text-anchor="middle" opacity="0.85" transform="rotate(-6 249 173)">🅿️할인계산</text>
+    <path d="M258,168 l5,14 l4,-5 l6,3 z" fill="#333"/>
+    <path d="M232,238 C238,210 240,130 236,100" stroke="#e02424" stroke-width="2.5" stroke-dasharray="6 4" fill="none" marker-end="url(#ah)"/>
+    <text x="255" y="215" font-size="12" fill="#e02424" font-weight="bold">① 버튼을 누른 채</text>
+    <text x="255" y="230" font-size="12" fill="#e02424" font-weight="bold">위로 끌기 (드래그)</text>
   </svg>
   <div class="drag">
     <a class="bm" id="bm" href="#">🅿️할인계산</a>
