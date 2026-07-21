@@ -7,6 +7,12 @@
  * 사이트는 pweb.kr(주차관제 벤더)이 제공하므로 직접 수정할 수 없다. 이 스크립트는
  * 이미 로그인된 페이지 위에 계산 패널을 하나 띄운다. 페이지가 이미 불러온
  * 데이터(전역 변수)만 읽으며, 외부로 아무것도 보내지 않고 저장하지도 않는다.
+ * (예외 1건: 패널을 열 때 공개 배포 페이지의 version.json 을 1회 읽어 새 버전
+ *  여부만 확인한다. 차량번호 등 어떤 데이터도 보내지 않으며 실패해도 무시한다.)
+ *
+ * 배포 절차: VERSION 을 올리고 → 같은 값으로 version.json 갱신 → 공개 페이지 재배포.
+ *   기존 사용자 북마클릿이 version.json 과 자신의 VERSION 이 다르면
+ *   패널 상단에 깜빡이는 업데이트 안내 + 새창 링크를 띄운다.
  *
  * 읽는 값:
  *   window.dataSetMst  — 조회된 차량 목록 (id, carNo, incar_min 경과분)
@@ -30,6 +36,8 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
+  var VERSION = '2026.07.21';                 // 배포 버전 — version.json 과 함께 갱신할 것
+  var HOME = 'https://pweb-parking-help.kr';  // 공개 배포 페이지 (도메인 확정 시 수정)
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -269,10 +277,36 @@
     '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
     '<span id="__pk_status" style="font-weight:700">대기</span>' +
     '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
+    '<div id="__pk_upd" style="display:none;padding:8px 12px;background:#b45309;color:#fff;line-height:1.5"></div>' +
     '<div id="__pk_body" style="padding:12px"></div>' +
-    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준</div>';
+    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + '</div>';
   document.body.appendChild(p);
   document.getElementById('__pk_x').onclick = function () { clearInterval(window.__pk_t); p.remove(); };
+
+  // ── 버전 확인 (패널을 열 때 1회) ─────────────────────────────────
+  // 공개 페이지의 정적 파일 version.json 만 읽는다. 아무 데이터도 보내지
+  // 않으며, 서버가 없거나 실패하면 조용히 넘어간다 — 계산 기능과 무관.
+  try {
+    fetch(HOME + '/version.json', { mode: 'cors', cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (v) {
+        if (!v || !v.version || String(v.version) === VERSION) return;
+        var bar = document.getElementById('__pk_upd');
+        if (!bar) return;
+        if (!document.getElementById('__pk_css')) {
+          var st = document.createElement('style');
+          st.id = '__pk_css';
+          st.textContent = '@keyframes __pk_blink{0%,100%{opacity:1}50%{opacity:.45}}';
+          document.head.appendChild(st);
+        }
+        var page = (typeof v.page === 'string' && /^https:\/\//.test(v.page)) ? v.page : HOME;
+        bar.style.display = 'block';
+        bar.style.animation = '__pk_blink 1.1s infinite';
+        bar.innerHTML = '🔔 새 버전 <b>v' + String(v.version).replace(/[<>&"']/g, '') + '</b> 이 나왔습니다!<br>' +
+          '<a href="' + page + '" target="_blank" rel="noopener" style="color:#fff;font-weight:700">여기서 북마클릿을 새 버전으로 교체하세요 →</a>';
+      })
+      .catch(function () {});
+  } catch (e) {}
 
   // 헤더 드래그로 이동 (데스크톱 전용 — 모바일 하단 시트는 고정)
   if (!MOBILE) (function () {

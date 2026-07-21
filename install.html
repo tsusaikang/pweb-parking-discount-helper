@@ -25,7 +25,7 @@
 </style>
 </head>
 <body>
-  <h1>pweb 주차할인 계산기</h1>
+  <h1>pweb 주차할인 계산기 <span id="ver" style="font-size:14px;color:#999;font-weight:400"></span></h1>
   <div class="sub">pweb.kr 웹 할인등록 화면에서 “0원까지 할인권을 얼마나 더 적용해야 하는지”를 자동으로 계산해 주는 보조 패널</div>
 
   <h2>1. 설치 — PC (크롬 등)</h2>
@@ -107,14 +107,24 @@
   <p class="muted">주차장 규칙(기본 무료시간·할인권 종류)이 바뀌면
      <code>bookmarklet-source.js</code> 맨 위의 <code>BASE_FREE</code>·<code>TICKETS</code> 값만 고치면 됩니다.</p>
 
-  <h2>6. 개인정보</h2>
+  <h2>6. 업데이트</h2>
+  <p>북마클릿은 한 번 설치하면 스스로 갱신되지 않습니다. 대신 패널을 열 때마다
+     이 페이지의 <code>version.json</code>을 확인해서, 새 버전이 있으면 패널 상단에
+     <b>주황색으로 깜빡이는 업데이트 안내</b>와 <b>이 페이지로 오는 링크(새창)</b>를 띄웁니다.
+     안내가 뜨면 여기서 코드를 다시 복사(또는 드래그)해 기존 북마크의 URL만 교체하면 됩니다.</p>
+
+  <h2>7. 개인정보</h2>
   <p class="muted">이 도구는 이미 열려 있는(로그인된) 페이지가 스스로 불러온 데이터만 읽어 화면에 표시합니다.
-     어떤 값도 외부로 전송하거나 저장하지 않습니다. 서버도, 계정 정보도 사용하지 않습니다.</p>
+     어떤 값도 외부로 전송하거나 저장하지 않습니다. 서버도, 계정 정보도 사용하지 않습니다.
+     유일한 외부 요청은 새 버전 확인을 위해 이 페이지의 정적 파일(<code>version.json</code>)을
+     읽는 것 하나이며, 이때도 차량번호 등 어떤 데이터도 함께 보내지 않습니다.</p>
 
 <!-- 북마클릿 원본: bookmarklet-source.js 의 (function(){...})() 부분과 완전히 동일해야 한다.
      아래 스크립트를 그대로 javascript: 로 감싸 href 로 만든다 -->
 <script type="text/plain" id="src">
 (function () {
+  var VERSION = '2026.07.21';                 // 배포 버전 — version.json 과 함께 갱신할 것
+  var HOME = 'https://pweb-parking-help.kr';  // 공개 배포 페이지 (도메인 확정 시 수정)
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -354,10 +364,36 @@
     '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
     '<span id="__pk_status" style="font-weight:700">대기</span>' +
     '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
+    '<div id="__pk_upd" style="display:none;padding:8px 12px;background:#b45309;color:#fff;line-height:1.5"></div>' +
     '<div id="__pk_body" style="padding:12px"></div>' +
-    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준</div>';
+    '<div style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + '</div>';
   document.body.appendChild(p);
   document.getElementById('__pk_x').onclick = function () { clearInterval(window.__pk_t); p.remove(); };
+
+  // ── 버전 확인 (패널을 열 때 1회) ─────────────────────────────────
+  // 공개 페이지의 정적 파일 version.json 만 읽는다. 아무 데이터도 보내지
+  // 않으며, 서버가 없거나 실패하면 조용히 넘어간다 — 계산 기능과 무관.
+  try {
+    fetch(HOME + '/version.json', { mode: 'cors', cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (v) {
+        if (!v || !v.version || String(v.version) === VERSION) return;
+        var bar = document.getElementById('__pk_upd');
+        if (!bar) return;
+        if (!document.getElementById('__pk_css')) {
+          var st = document.createElement('style');
+          st.id = '__pk_css';
+          st.textContent = '@keyframes __pk_blink{0%,100%{opacity:1}50%{opacity:.45}}';
+          document.head.appendChild(st);
+        }
+        var page = (typeof v.page === 'string' && /^https:\/\//.test(v.page)) ? v.page : HOME;
+        bar.style.display = 'block';
+        bar.style.animation = '__pk_blink 1.1s infinite';
+        bar.innerHTML = '🔔 새 버전 <b>v' + String(v.version).replace(/[<>&"']/g, '') + '</b> 이 나왔습니다!<br>' +
+          '<a href="' + page + '" target="_blank" rel="noopener" style="color:#fff;font-weight:700">여기서 북마클릿을 새 버전으로 교체하세요 →</a>';
+      })
+      .catch(function () {});
+  } catch (e) {}
 
   // 헤더 드래그로 이동 (데스크톱 전용 — 모바일 하단 시트는 고정)
   if (!MOBILE) (function () {
@@ -386,6 +422,8 @@
     var href = 'javascript:' + encodeURIComponent(src);
     document.getElementById('bm').setAttribute('href', href);
     document.getElementById('raw').value = href;
+    var vm = /VERSION\s*=\s*'([^']+)'/.exec(src); // 버전은 스크립트가 단일 출처
+    if (vm) document.getElementById('ver').textContent = 'v' + vm[1];
     document.getElementById('copyBtn').onclick = function () {
       var btn = this, t = document.getElementById('raw');
       function ok() { btn.textContent = '복사됨 ✓ 이제 북마크 URL 칸에 붙여넣으세요'; }
