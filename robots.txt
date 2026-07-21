@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tsusaikang.github.io/pweb-parking-discount-helper/sitemap.xml
