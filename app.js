@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.2';
+  var VERSION = '2026.07.22.3';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -281,6 +281,45 @@
       if (d > 0) newly[id] = d;
     });
 
+    // ── 모바일: 최소 정보 레이아웃 (2026-07-21 사용자 요청 — 화면 가림 최소화) ──
+    // 페이지에 이미 보이는 차량번호·주차시간 등은 생략. 상태 + 핵심 수치 +
+    // 권종 칩(몇 장) + 비용·만료시각만 표시한다.
+    if (MOBILE) {
+      var mchip = function (t, cnt, done) {
+        return '<span style="display:inline-block;margin:3px 4px 0 0;padding:3px 10px;border-radius:14px;font-weight:800;font-size:13px;' +
+          (done ? 'background:#e6f7ed;border:1px solid #86d9a8;color:#137a3f'
+                : 'background:#fff8e8;border:1px solid #f0c36d;color:#8a5a00') + '">' +
+          (done ? '✓ ' : '') + t.n + ' ×' + cnt + '</span>';
+      };
+      var doneChips = Object.keys(newly).map(function (id) {
+        return byId[id] ? mchip(byId[id], newly[id], true) : '';
+      }).join('');
+      var mh;
+      if (margin >= 0) {
+        setStatus('#137a3f', '✓ 0원 완료');
+        mh = '<div style="text-align:center;font-size:18px;font-weight:800;color:#0c5a2e">✅ ' +
+             fmt(margin) + ' 남음 · <span style="color:#137a3f">' + clock(now + margin * 60000) + '까지 0원</span></div>' +
+             (doneChips ? '<div style="margin-top:4px;text-align:center">' + doneChips + '</div>' : '');
+      } else {
+        var mShort = elapsed - covered;
+        var mFreeUsed = (counts[FREE_ID] || 0) >= 1;
+        var mCombo = best(Math.ceil(mShort - (mFreeUsed ? 0 : byId[FREE_ID].m)));
+        var mCover = (mFreeUsed ? 0 : byId[FREE_ID].m) + (mCombo.cover || 0);
+        var mMargin = covered + mCover - elapsed;
+        var pendChips = (mFreeUsed ? '' : mchip(byId[FREE_ID], 1, false)) +
+          TICKETS.map(function (t) {
+            return (mCombo.items && mCombo.items[t.id]) ? mchip(t, mCombo.items[t.id], false) : '';
+          }).join('');
+        setStatus('#c0392b', '⚠ 적용 필요');
+        mh = '<div style="text-align:center;font-size:18px;font-weight:800;color:#96281b">⚠ 부족 ' + fmt(mShort) + '</div>' +
+             '<div style="margin-top:4px;text-align:center">' + doneChips + pendChips + '</div>' +
+             '<div style="margin-top:5px;text-align:center;color:#555">' + (mCombo.cost || 0).toLocaleString() +
+             '원 · 적용 후 <b>' + clock(now + mMargin * 60000) + '</b>까지 0원</div>';
+      }
+      el.innerHTML = mh;
+      return;
+    }
+
     var h = '';
     h += '<div style="font-size:15px;font-weight:700;margin-bottom:2px">' + carNo + '</div>';
     h += '<div style="color:#555;margin-bottom:8px">경과 <b>' + fmt(elapsed) + '</b> · 기본무료 ' + BASE_FREE + '분</div>';
@@ -346,12 +385,12 @@
   p.innerHTML =
     '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:' +
     (MOBILE ? '14px 14px 0 0' : '12px 12px 0 0') + ';' + (MOBILE ? '' : 'cursor:move;') + 'transition:background .3s">' +
-    '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
+    '<b>' + (MOBILE ? '할인계산' : 'pweb 주차할인 계산기') + '</b><span style="display:flex;align-items:center;gap:10px">' +
     '<span id="__pk_status" style="font-weight:700">대기</span>' +
     '<span id="__pk_min" style="cursor:pointer;font-size:16px;padding:2px 6px">▾</span>' +
     '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
-    '<div id="__pk_body" style="padding:12px"></div>' +
-    '<div id="__pk_foot" style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
+    '<div id="__pk_body" style="padding:' + (MOBILE ? '8px 12px 10px' : '12px') + '"></div>' +
+    '<div id="__pk_foot" style="' + (MOBILE ? 'display:none;' : '') + 'padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
   document.body.appendChild(p);
 
   // 모바일: 패널이 페이지 아래쪽을 가리지 않도록, 패널 높이만큼
