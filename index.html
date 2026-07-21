@@ -130,7 +130,7 @@
      아래 스크립트를 그대로 javascript: 로 감싸 href 로 만든다 -->
 <script type="text/plain" id="src">
 (function () {
-  var VERSION = '2026.07.21';                 // 배포 버전 — version.json 과 함께 갱신할 것
+  var VERSION = '2026.07.21.2';                 // 배포 버전 — version.json 과 함께 갱신할 것
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper'; // 공개 배포 페이지 (2026-07-21 확정)
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -251,6 +251,7 @@
       '<div style="font-size:20px;font-weight:800">⛔ 사용 금지</div>' +
       '<div style="margin-top:8px;line-height:1.6">이 사이트는 이 도구가 아는 구조와 달라<br><b>계산 결과를 신뢰할 수 없습니다.</b><br>모든 기능을 중단했습니다.</div>' +
       '<div style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.14);border-radius:8px">이 도구를 사용하지 마시고<br><b>강주상 (tsusai@msn.com)</b> 에게 문의하세요.</div>' +
+      '<div style="margin-top:8px;font-size:12px;opacity:.85">위에 🔔 업데이트 안내가 떠 있다면 새 버전에서 해결됐을 수 있으니, 먼저 업데이트한 뒤 다시 시도하세요.</div>' +
       '</div>' +
       '<div style="margin-top:8px;color:#999;font-size:11px">사유: ' + bad.join(' · ') + '</div>';
   }
