@@ -135,8 +135,29 @@
   </div>
 
   <h2>4. 설치 — 휴대폰</h2>
-  <p style="font-size:16px">휴대폰 설치는 <b>딱 두 단계</b>입니다:
-     <b>① 코드 복사</b> → <b>② 북마크에 붙여넣기</b>. 이게 전부입니다.</p>
+  <p style="font-size:16px">방법이 두 가지입니다. <b>방법 A(자동 실행)</b>가 훨씬 편합니다 —
+     설치도 탭 몇 번이고, 이후에는 할인등록 화면을 열기만 하면 계산기가 <b>저절로 떠 있습니다</b>
+     (북마크도, 주소창 입력도 없음). Edge·Firefox·iPhone 이면 A를,
+     <b>크롬(안드로이드)만 쓴다면</b> 크롬은 확장을 지원하지 않으므로 B(북마클릿)를 따라 하세요.</p>
+
+  <div class="bigstep" style="border-color:#137a3f">
+    <div class="bh"><span class="bignum" style="background:#137a3f">A</span>자동 실행 방식 (추천 — Edge · Firefox · iPhone Safari)</div>
+    <ol>
+      <li><b>Android · Edge</b>: 하단 <b>☰ 메뉴 → 확장</b>에서 <b>Tampermonkey</b> 설치
+          (<b>Firefox</b>는 메뉴 → 부가 기능에서 Tampermonkey 설치)</li>
+      <li>아래 <b>초록 버튼</b>을 탭 → Tampermonkey 가 여는 화면에서 <b>설치</b> 누르기</li>
+      <li>끝. 이제 할인등록 화면을 열면 계산기가 <b>자동으로</b> 떠 있습니다</li>
+    </ol>
+    <a class="bm" style="background:#137a3f" href="pweb-parking-calc.user.js">📥 자동 실행 스크립트 설치</a>
+    <div class="muted" style="margin-top:10px">
+      <b>iPhone</b>: App Store 에서 무료 앱 <b>“Userscripts”</b> 설치 → 설정 → Safari → 확장 프로그램에서 켜기
+      → Safari 로 이 페이지를 열어 위 초록 버튼 탭.<br>
+      스크립트는 할인등록 화면에서만 동작하며, 다른 페이지에서는 아무것도 하지 않습니다.
+    </div>
+  </div>
+
+  <p style="font-size:16px;margin-top:26px"><b>방법 B — 북마클릿 (크롬 등)</b>:
+     <b>① 코드 복사</b> → <b>② 북마크에 붙여넣기</b> 두 단계입니다.</p>
 
   <div class="bigstep">
     <div class="bh"><span class="bignum">1</span>먼저, 코드를 복사하세요</div>
@@ -152,7 +173,7 @@
        <b>ⓑ 방금 저장된 그 북마크를 편집</b>해서, 이름을 <code>할인계산</code>으로 바꾸고
        URL을 지운 자리에 <b>복사한 코드를 붙여넣기</b>.<br>
        새로 입력하는 게 아니라 <b>저장해 둔 것을 고치는</b> 방식입니다.<br>
-       <span class="muted">아래 세 개는 이 과정을 브라우저별로 그림으로 보여주는 것뿐입니다 —
+       <span class="muted">아래 두 개는 이 과정을 브라우저별로 그림으로 보여주는 것뿐입니다 —
        <b>본인이 쓰는 브라우저 하나만</b> 보면 됩니다.</span></p>
 
   <div class="card">
@@ -244,57 +265,13 @@
       </div>
     </div>
   </div>
-  <div class="card">
-    <b>삼성 인터넷</b>
-    <div class="steps">
-      <div class="step">
-        <div class="ph">
-          <div class="pbar"><span>pweb.kr</span></div>
-          <div class="pbody">
-            <div class="pmenu">
-              <div>다운로드</div>
-              <div class="hl">➕ 페이지 추가 → 북마크</div>
-              <div>공유</div>
-            </div>
-          </div>
-          <div class="ptool"><span>←</span><span>→</span><span>🏠</span><span class="hl" style="padding:0 5px">☰</span></div>
-        </div>
-        <div class="cap">① <b>☰ 메뉴</b> → <b>페이지 추가 → 북마크</b><br>→ 지금 페이지가 <b>일단 저장</b>됨</div>
-      </div>
-      <div class="step">
-        <div class="ph">
-          <div class="pbar"><span>북마크 편집</span><span>저장</span></div>
-          <div class="pbody">
-            <div class="plabel">이름</div>
-            <div class="pfield">할인계산</div>
-            <div class="plabel">URL — 지우고 복사한 코드 붙여넣기</div>
-            <div class="pfield hl">javascript:(function(){var s=d…</div>
-          </div>
-        </div>
-        <div class="cap">② 북마크 목록에서 <b>방금 저장된 항목</b>을 <b>편집</b>:<br>URL을 지우고 <b>복사한 코드로 교체</b></div>
-      </div>
-      <div class="step">
-        <div class="ph">
-          <div class="pbar"><span>북마크</span></div>
-          <div class="pbody">
-            <div class="pmenu" style="width:95%;margin:0">
-              <div>📁 즐겨찾기</div>
-              <div class="hl">🅿️ 할인계산</div>
-            </div>
-            <div class="plabel" style="margin-top:10px">※ 할인등록 페이지를 띄운 상태에서</div>
-          </div>
-        </div>
-        <div class="cap">③ 할인등록 화면에서 북마크 목록의<br><b>할인계산</b> 탭 (안 되면 주소창에 입력)</div>
-      </div>
-    </div>
-  </div>
   </div><!-- /2단계 -->
   <div class="muted">이 페이지 주소를 카톡 등으로 공유하면, 받은 사람도 휴대폰에서 바로 이 복사 버튼을 쓸 수 있습니다.</div>
 
   <h2>5. 사용법 — 딱 세 단계</h2>
   <ol>
     <li>주차 할인 사이트(pweb.kr)에 로그인해서, <b>평소 하던 대로</b> 차량번호 조회 → 차량 선택</li>
-    <li>북마크 바의 <b>🅿️할인계산</b> 클릭 (휴대폰은 주소창에 “할인계산” 입력)</li>
+    <li>북마크 바의 <b>🅿️할인계산</b> 클릭 (휴대폰 크롬은 주소창에 “할인계산” 입력 · <b>자동 실행 방식이면 이 단계 자체가 없습니다</b>)</li>
     <li>화면에 뜨는 패널이 <b>어떤 주차권을 몇 장</b> 적용하면 되는지 알려줍니다 — 그대로 적용하면 끝</li>
   </ol>
   <div class="muted">패널은 1초마다 스스로 갱신됩니다. 한 번 더 클릭하면 닫히고, PC에서는 제목줄을 끌어 위치를 옮길 수 있습니다.</div>
@@ -385,6 +362,7 @@
      URL 길이 한계 해결 + 수동 업데이트 제거). 아무 데이터도 보내지 않는다. -->
 <script type="text/plain" id="src">
 (function () {
+  window.__pk_auto = false; // 사용자가 직접 클릭 — 항상 패널(안내 포함)을 띄운다
   var s = document.createElement('script');
   s.src = 'https://tsusaikang.github.io/pweb-parking-discount-helper/app.js?t=' + Date.now();
   s.onerror = function () { alert('주차할인 계산기를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'); };
