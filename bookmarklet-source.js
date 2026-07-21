@@ -133,6 +133,20 @@
     return bad;
   }
 
+  // 안내 화면: 비호환이 아니라 "실행할 곳이 아님" — 차단하지 않고 안내만.
+  // 폴링은 유지한다(화면이 바뀌어 구조가 나타나면 자동 복귀).
+  function guide(onPweb) {
+    setStatus('#2b6cb0', 'ℹ 안내');
+    var el = document.getElementById('__pk_body');
+    if (!el) return;
+    el.innerHTML =
+      '<div style="background:#ebf4ff;border:1px solid #90b8e0;border-radius:10px;padding:12px;line-height:1.7">' +
+      (onPweb
+        ? '<b>아직 할인등록 화면이 아닙니다.</b><br>로그인한 뒤 <b>할인등록 화면</b>으로 이동해서 이 북마크를 다시 실행하세요.'
+        : '<b>이 도구는 pweb.kr 할인등록 화면 전용입니다.</b><br>건물의 pweb.kr 주소로 접속해 로그인한 뒤, <b>할인등록 화면</b>에서 실행하세요.') +
+      '</div>';
+  }
+
   // 차단 화면: 폴링을 완전히 멈추고 사용 금지 안내만 남긴다
   function block(bad) {
     clearInterval(window.__pk_t);
@@ -175,7 +189,16 @@
     var el = document.getElementById('__pk_body');
     if (!el) return;
     var bad = compat();
-    if (bad.length) { block(bad); return; } // 호환 문제 → 전면 차단
+    if (bad.length) {
+      // 구조가 안 보이는 이유를 위치로 구분한다:
+      //   pweb.kr 이 아님          → 전용 도구 안내
+      //   pweb.kr 인데 다른 화면    → 로그인/이동 안내 (로그인 페이지가 대표적)
+      //   할인등록 화면인데 어긋남  → 진짜 비호환 → 전면 차단
+      var onPweb = /(^|\.)pweb\.kr$/i.test(location.hostname);
+      var onReg = location.pathname.indexOf('/discount/registration') === 0;
+      if (onPweb && onReg) { block(bad); return; }
+      guide(onPweb); return;
+    }
     var now = Date.now();
     var mst = window.dataSetMst,
         peId = (document.getElementById('peId') || {}).value;
