@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.5';
+  var VERSION = '2026.07.22.6';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -296,8 +296,9 @@
                 : 'background:#fff8e8;border:1px solid #f0c36d;color:#8a5a00') + '">' +
           (done ? '✓ ' : '') + t.n + ' ×' + cnt + '</span>';
       };
-      var doneChips = Object.keys(newly).map(function (id) {
-        return byId[id] ? mchip(byId[id], newly[id], true) : '';
+      // 현재 적용된 할인 전부를 ✓칩으로 (PC 의 "적용된 할인" 표시에 해당)
+      var appliedChips = Object.keys(counts).map(function (id) {
+        return byId[id] ? mchip(byId[id], counts[id], true) : '';
       }).join('');
       var mh;
       if (margin >= 0) {
@@ -307,7 +308,7 @@
              '<div style="font-size:15px;margin-top:3px">' + fmt(margin) + '</div>' +
              '<div style="font-size:11px;color:#137a3f;font-weight:700">남음</div>' +
              '<div style="font-size:12px;margin-top:5px;color:#137a3f"><b>' + clock(now + margin * 60000) + '</b>까지</div></div>' +
-             doneChips;
+             appliedChips;
       } else {
         var mShort = elapsed - covered;
         var mFreeUsed = (counts[FREE_ID] || 0) >= 1;
@@ -322,7 +323,7 @@
         mh = '<div style="text-align:center;font-weight:800;color:#96281b">' +
              '<div style="font-size:13px">⚠ 부족</div>' +
              '<div style="font-size:16px;margin-top:2px">' + fmt(mShort) + '</div></div>' +
-             '<div style="margin-top:5px">' + doneChips + pendChips + '</div>' +
+             '<div style="margin-top:5px">' + appliedChips + pendChips + '</div>' +
              '<div style="text-align:center;color:#555;font-size:11px;margin-top:5px">' + (mCombo.cost || 0).toLocaleString() + '원<br>' +
              '적용 후 <b>' + clock(now + mMargin * 60000) + '</b>까지</div>';
       }
@@ -401,10 +402,9 @@
     ';z-index:2147483647;font-family:-apple-system,"Malgun Gothic",sans-serif;color:#222';
   p.innerHTML = MOBILE
     ? '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;gap:2px;padding:6px 5px;background:#6b7280;color:#fff;border-radius:11px 11px 0 0;transition:background .3s">' +
+      '<span id="__pk_min" style="cursor:pointer;font-size:15px;padding:2px 4px">▸</span>' + // 접기 — ✕와 반대편
       '<span id="__pk_status" style="font-weight:700;font-size:12px;white-space:nowrap">대기</span>' +
-      '<span style="display:flex;align-items:center">' +
-      '<span id="__pk_min" style="cursor:pointer;font-size:15px;padding:2px 3px">▸</span>' +
-      '<span id="__pk_x" style="cursor:pointer;font-size:15px;padding:2px 3px">✕</span></span></div>' +
+      '<span id="__pk_x" style="cursor:pointer;font-size:15px;padding:2px 4px">✕</span></div>' +
       '<div id="__pk_body" style="padding:8px 6px"></div>' +
       '<div id="__pk_foot" style="display:none"></div>'
     : '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:12px 12px 0 0;cursor:move;transition:background .3s">' +
@@ -448,7 +448,29 @@
     syncPad();
   };
 
-  // 헤더 드래그로 이동 (데스크톱 전용 — 모바일 도크는 고정)
+  // 모바일: 헤더를 손가락으로 끌어 박스 위치 이동 (터치 드래그)
+  if (MOBILE) (function () {
+    var head = document.getElementById('__pk_head'), sx, sy, ox, oy, dragging = false;
+    head.addEventListener('touchstart', function (e) {
+      var t = e.target;
+      if (t && (t.id === '__pk_x' || t.id === '__pk_min')) return; // 버튼은 드래그 제외
+      var tc = e.touches[0];
+      dragging = true; sx = tc.clientX; sy = tc.clientY;
+      var r = p.getBoundingClientRect(); ox = r.left; oy = r.top;
+    }, { passive: true });
+    head.addEventListener('touchmove', function (e) {
+      if (!dragging) return;
+      var tc = e.touches[0];
+      // zoom 이 적용된 요소라 스타일 좌표는 화면 좌표를 Z 로 나눠 넣는다
+      p.style.left = Math.round((ox + tc.clientX - sx) / Z) + 'px';
+      p.style.top = Math.round((oy + tc.clientY - sy) / Z) + 'px';
+      p.style.right = 'auto';
+      if (e.cancelable) e.preventDefault(); // 페이지 스크롤과 겹치지 않게
+    }, { passive: false });
+    head.addEventListener('touchend', function () { dragging = false; }, { passive: true });
+  })();
+
+  // 헤더 드래그로 이동 (데스크톱 전용 — 마우스)
   if (!MOBILE) (function () {
     var head = document.getElementById('__pk_head'), sx, sy, ox, oy, drag = false;
     head.addEventListener('mousedown', function (e) {
