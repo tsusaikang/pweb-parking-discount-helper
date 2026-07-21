@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pweb 주차할인 계산기
 // @namespace    https://tsusaikang.github.io/pweb-parking-discount-helper
-// @version      1.0.0
+// @version      1.1.0
 // @description  pweb.kr 할인등록 화면에서 "0원까지 할인권을 몇 장 더 적용해야 하는지"를 자동 계산해 패널로 표시 (비공식 보조 도구)
 // @author       강주상 (tsusai@msn.com)
 // @match        https://*.pweb.kr/*
