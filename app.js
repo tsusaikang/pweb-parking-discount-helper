@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.6';
+  var VERSION = '2026.07.22.7';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -46,26 +46,45 @@
   var MOB_PAGE = location.pathname.indexOf('/discount/doViewRegistrationDscnt') === 0;
 
   // 부족한 need(분)을 최소 비용으로 덮는 유료권 조합 (DP). items 는 id→장수
+  // 같은 비용이면 장수가 적은 조합을 고른다 (30분권 7장 대신 1시간권 3장+30분권 1장).
   function best(need) {
-    if (need <= 0) return { cover: 0, cost: 0, items: {} };
+    if (need <= 0) return { cover: 0, cost: 0, items: {}, count: 0 };
     var MAX = need + 1440, dp = new Array(MAX + 1).fill(null);
-    dp[0] = { cost: 0, items: {} };
+    dp[0] = { cost: 0, items: {}, count: 0 };
     for (var m = 0; m <= MAX; m++) {
       if (!dp[m]) continue;
       for (var i = 0; i < PAID.length; i++) {
-        var t = PAID[i], nm = Math.min(MAX, m + t.m), nc = dp[m].cost + t.p;
-        if (!dp[nm] || nc < dp[nm].cost) {
+        var t = PAID[i], nm = Math.min(MAX, m + t.m),
+            nc = dp[m].cost + t.p, nk = dp[m].count + 1;
+        if (!dp[nm] || nc < dp[nm].cost || (nc === dp[nm].cost && nk < dp[nm].count)) {
           var it = Object.assign({}, dp[m].items);
           it[t.id] = (it[t.id] || 0) + 1;
-          dp[nm] = { cost: nc, items: it };
+          dp[nm] = { cost: nc, items: it, count: nk };
         }
       }
     }
     var b = null;
     for (var m2 = need; m2 <= MAX; m2++)
-      if (dp[m2] && (!b || dp[m2].cost < b.cost))
-        b = { cover: m2, cost: dp[m2].cost, items: dp[m2].items };
+      if (dp[m2] && (!b || dp[m2].cost < b.cost || (dp[m2].cost === b.cost && dp[m2].count < b.count)))
+        b = { cover: m2, cost: dp[m2].cost, items: dp[m2].items, count: dp[m2].count };
     return b;
+  }
+
+  // 이미 0원인데 "필요보다 비싸게" 적용했는지 판정 (사용자 확정 2026-07-22).
+  // 무료2시간은 항상 활용한다고 보고, 최소 비용 조합보다 유료 지출이 크면 절약 안내.
+  // 도구 추천대로(안전 초과 포함) 적용한 경우엔 curPaid == optCost 라 뜨지 않는다.
+  function overApplied(elapsed, counts) {
+    var curPaid = 0;
+    Object.keys(counts).forEach(function (id) {
+      if (byId[id] && byId[id].p > 0) curPaid += counts[id] * byId[id].p;
+    });
+    var need = Math.ceil(elapsed - BASE_FREE - byId[FREE_ID].m); // 무료2시간 활용 가정
+    var opt = best(need);
+    var optCost = opt.cost || 0;
+    if (curPaid > optCost)
+      return { save: curPaid - optCost, curPaid: curPaid, optCost: optCost,
+               combo: opt, freeUsed: (counts[FREE_ID] || 0) >= 1 };
+    return null;
   }
 
   function fmt(min) {
@@ -309,6 +328,15 @@
              '<div style="font-size:11px;color:#137a3f;font-weight:700">남음</div>' +
              '<div style="font-size:12px;margin-top:5px;color:#137a3f"><b>' + clock(now + margin * 60000) + '</b>까지</div></div>' +
              appliedChips;
+        // 필요보다 많이 적용됐으면: 절약 배지 + 최소 조합 칩 (같은 0원)
+        var mOver = overApplied(elapsed, counts);
+        if (mOver) {
+          mh += '<div style="margin-top:6px;padding:4px 5px;border-radius:8px;background:#fffbe6;border:1px solid #f0c36d;text-align:center;font-size:11px;font-weight:800;color:#8a5a00">💡 -' + mOver.save.toLocaleString() + '원 가능</div>' +
+            (mOver.freeUsed ? '' : mchip(byId[FREE_ID], 1, false)) +
+            TICKETS.map(function (t) {
+              return (mOver.combo.items && mOver.combo.items[t.id]) ? mchip(t, mOver.combo.items[t.id], false) : '';
+            }).join('');
+        }
       } else {
         var mShort = elapsed - covered;
         var mFreeUsed = (counts[FREE_ID] || 0) >= 1;
@@ -349,6 +377,21 @@
            '<div style="font-size:22px;font-weight:800;color:#0c5a2e;margin-top:6px">' + fmt(margin) + ' 남음</div>' +
            '<div style="font-size:15px;color:#137a3f;margin-top:2px"><b>' + clock(now + margin * 60000) + '</b>까지 0원</div></div>';
       h += appliedCards;
+      // 필요보다 많이 적용됐으면 더 싼 조합으로 바꾸라고 안내 (같은 0원)
+      var over = overApplied(elapsed, counts);
+      if (over) {
+        var oCards = '';
+        if (!over.freeUsed) oCards += card(byId[FREE_ID], 1, false);
+        TICKETS.forEach(function (t) {
+          if (over.combo.items && over.combo.items[t.id]) oCards += card(t, over.combo.items[t.id], false);
+        });
+        h += '<div style="background:#fffbe6;border:1px solid #f0c36d;border-radius:10px;padding:10px 12px;margin-top:10px">' +
+             '<div style="font-weight:800;color:#8a5a00">💡 필요보다 많이 적용됐어요 — ' + over.save.toLocaleString() + '원 절약 가능</div>' +
+             '<div style="color:#555;margin:4px 0 8px;font-size:12px">지금 유료 할인 <b>' + over.curPaid.toLocaleString() + '원</b> 적용됨. 아래 조합이면 <b>같은 0원</b>인데 <b>' + over.optCost.toLocaleString() + '원</b>입니다.</div>' +
+             oCards +
+             '<div style="color:#777;font-size:12px;margin-top:4px">실수로 많이 적용했다면 <b>지금 유료 할인을 빼고</b> 위 조합으로 다시 적용하세요. 일부러 넉넉히 둔 거면 그대로 둬도 됩니다.</div>' +
+             '</div>';
+      }
     } else {
       var shortage = elapsed - covered;
       var freeUsed = (counts[FREE_ID] || 0) >= 1;
