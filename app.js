@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.9';
+  var VERSION = '2026.07.22.10';
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -72,8 +72,10 @@
   }
 
   // 이미 0원인데 "필요보다 비싸게" 적용했는지 판정 (사용자 확정 2026-07-22).
-  // 무료2시간은 항상 활용한다고 보고, 최소 비용 조합보다 유료 지출이 크면 절약 안내.
+  // 무료2시간은 항상 활용한다고 보고, 최소 비용 조합보다 유료 지출이 크면 안내.
   // 도구 추천대로(안전 초과 포함) 적용한 경우엔 curPaid == optCost 라 뜨지 않는다.
+  // "최종 조합"이 아니라 **현재 적용분과의 차이(뭘 빼고/뭘 넣어라)** 를 돌려준다
+  // (2026-07-22 사용자 요청 — 이미 있는 권을 다시 "적용 필요"로 보여주면 헷갈림).
   function overApplied(elapsed, counts) {
     var curPaid = 0;
     Object.keys(counts).forEach(function (id) {
@@ -82,10 +84,22 @@
     var need = Math.ceil(elapsed - BASE_FREE - byId[FREE_ID].m); // 무료2시간 활용 가정
     var opt = best(need);
     var optCost = opt.cost || 0;
-    if (curPaid > optCost)
-      return { save: curPaid - optCost, curPaid: curPaid, optCost: optCost,
-               combo: opt, freeUsed: (counts[FREE_ID] || 0) >= 1 };
-    return null;
+    if (curPaid <= optCost) return null;
+    // 최적 최종 상태(멀티셋) = 무료2시간 1장 + 최소 조합
+    var target = {}; target[FREE_ID] = 1;
+    Object.keys(opt.items || {}).forEach(function (id) { target[id] = opt.items[id]; });
+    // 현재분과 비교해 뺄 것/넣을 것 산출
+    var remove = {}, add = {}, ids = {};
+    Object.keys(counts).forEach(function (id) { ids[id] = 1; });
+    Object.keys(target).forEach(function (id) { ids[id] = 1; });
+    Object.keys(ids).forEach(function (id) {
+      var c = counts[id] || 0, t = target[id] || 0;
+      if (c > t) remove[id] = c - t;
+      else if (t > c) add[id] = t - c;
+    });
+    return { save: curPaid - optCost, curPaid: curPaid, optCost: optCost,
+             remove: remove, add: add,
+             hasAdd: Object.keys(add).length > 0 };
   }
 
   function fmt(min) {
@@ -211,20 +225,21 @@
   // 경과시간 보간을 위한 (E, seenAt)
   var S = { carId: null, E: null, seenAt: 0, base: null, baseAt: 0 };
 
-  function card(t, cnt, applied) {
-    // 몇 장인지가 핵심 정보라 배지로 강조한다 (1장이어도 표시)
+  // kind: 'applied'(✓적용됨) | 'add'(적용 필요) | 'remove'(빼세요). 하위호환: true→applied, false→add
+  function card(t, cnt, kind) {
+    if (kind === true) kind = 'applied';
+    if (kind === false || !kind) kind = 'add';
+    var C = {
+      applied: { badge: '#137a3f', style: 'border:1px solid #86d9a8;background:#e6f7ed', right: '<span style="color:#137a3f;font-weight:700;white-space:nowrap">✓ 적용됨</span>' },
+      add:     { badge: '#b26a00', style: 'border:1px solid #f0c36d;background:#fff8e8', right: '<span style="color:#b26a00;font-weight:700;white-space:nowrap">적용 필요</span>' },
+      remove:  { badge: '#b02a1c', style: 'border:1px solid #f1a9a0;background:#fdecea', right: '<span style="color:#b02a1c;font-weight:800;white-space:nowrap">❌ 빼세요</span>' }
+    }[kind];
     var chip = '<span style="display:inline-block;margin-left:6px;padding:0 8px;border-radius:10px;font-weight:800;font-size:14px;color:#fff;background:' +
-      (applied ? '#137a3f' : '#b26a00') + '">' + cnt + '장</span>';
-    var right = applied
-      ? '<span style="color:#137a3f;font-weight:700;white-space:nowrap">✓ 적용됨</span>'
-      : '<span style="color:#b26a00;font-weight:700;white-space:nowrap">적용 필요</span>';
-    var style = applied
-      ? 'border:1px solid #86d9a8;background:#e6f7ed'
-      : 'border:1px solid #f0c36d;background:#fff8e8';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin:6px 0;border-radius:8px;' + style + '">' +
+      C.badge + '">' + cnt + '장</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin:6px 0;border-radius:8px;' + C.style + '">' +
       '<div><b>' + t.n + '</b>' + chip +
       '<span style="color:#888;margin-left:6px">' + (t.m * cnt) + '분 · ' + (t.p * cnt).toLocaleString() + '원</span></div>' +
-      right + '</div>';
+      C.right + '</div>';
   }
 
   function setStatus(color, text) {
@@ -312,11 +327,16 @@
     if (MOBILE) {
       // 좁은 세로 도크 — 좌우를 아끼고 요소를 위아래로 길게 쌓는다 (2026-07-22 사용자 요청).
       // 권종 칩은 이름/장수를 두 줄로, 구획마다 얇은 구분선 + 작은 라벨.
-      var mchip = function (t, cnt, done) {
-        return '<div style="margin:5px 0;padding:7px 3px;border-radius:10px;font-weight:800;font-size:12px;text-align:center;line-height:1.25;' +
-          (done ? 'background:#e6f7ed;border:1px solid #86d9a8;color:#137a3f'
-                : 'background:#fff8e8;border:1px solid #f0c36d;color:#8a5a00') + '">' +
-          (done ? '✓ ' : '') + t.n + '<br><span style="font-size:13px">×' + cnt + '</span></div>';
+      // kind: 'applied'(✓녹색) | 'add'(주황) | 'remove'(❌빨강). 하위호환 true→applied,false→add
+      var mchip = function (t, cnt, kind) {
+        if (kind === true) kind = 'applied'; if (kind === false || !kind) kind = 'add';
+        var m = {
+          applied: { s: 'background:#e6f7ed;border:1px solid #86d9a8;color:#137a3f', p: '✓ ' },
+          add:     { s: 'background:#fff8e8;border:1px solid #f0c36d;color:#8a5a00', p: '' },
+          remove:  { s: 'background:#fdecea;border:1px solid #f1a9a0;color:#b02a1c', p: '❌ ' }
+        }[kind];
+        return '<div style="margin:5px 0;padding:7px 3px;border-radius:10px;font-weight:800;font-size:12px;text-align:center;line-height:1.25;' + m.s + '">' +
+          m.p + t.n + '<br><span style="font-size:13px">×' + cnt + '</span></div>';
       };
       var section = function (label, inner) {
         return '<div style="border-top:1px solid rgba(0,0,0,.08);margin-top:8px;padding-top:7px">' +
@@ -337,14 +357,18 @@
              '<div style="font-size:12px;color:#137a3f;margin-top:11px">~<b>' + clock(now + margin * 60000) + '</b></div>' +
              '</div>';
         if (appliedChips) mh += section('적용된 할인', appliedChips);
-        // 필요보다 많이 적용됐으면: 절약 라벨 + 최소 조합 칩 (같은 0원)
+        // 필요보다 많이 적용됐으면: 뺄 것/넣을 것 칩 (같은 0원)
         var mOver = overApplied(elapsed, counts);
         if (mOver) {
-          var oChips = (mOver.freeUsed ? '' : mchip(byId[FREE_ID], 1, false)) +
-            TICKETS.map(function (t) {
-              return (mOver.combo.items && mOver.combo.items[t.id]) ? mchip(t, mOver.combo.items[t.id], false) : '';
-            }).join('');
-          mh += section('<b style="color:#8a5a00">💡 -' + mOver.save.toLocaleString() + '원 가능</b><br>이 조합으로 바꾸면 절약', oChips);
+          var rmChips = TICKETS.map(function (t) {
+            return mOver.remove[t.id] ? mchip(t, mOver.remove[t.id], 'remove') : '';
+          }).join('');
+          var addChips = TICKETS.map(function (t) {
+            return mOver.add[t.id] ? mchip(t, mOver.add[t.id], 'add') : '';
+          }).join('');
+          mh += section('<b style="color:#8a5a00">💡 -' + mOver.save.toLocaleString() + '원 가능</b><br>' +
+            (mOver.hasAdd ? '빼고 대신 넣기' : '빼기만'),
+            rmChips + (mOver.hasAdd ? '<div style="font-size:9px;color:#9aa0a6;text-align:center;margin:3px 0 1px">↓ 대신</div>' + addChips : ''));
         }
       } else {
         var mShort = elapsed - covered;
@@ -389,19 +413,22 @@
            '<div style="font-size:22px;font-weight:800;color:#0c5a2e;margin-top:6px">' + fmt(margin) + ' 남음</div>' +
            '<div style="font-size:15px;color:#137a3f;margin-top:2px"><b>' + clock(now + margin * 60000) + '</b>까지 0원</div></div>';
       h += appliedCards;
-      // 필요보다 많이 적용됐으면 더 싼 조합으로 바꾸라고 안내 (같은 0원)
+      // 필요보다 많이 적용됐으면: 현재분과의 차이(뭘 빼고/뭘 넣어라)를 안내 (같은 0원)
       var over = overApplied(elapsed, counts);
       if (over) {
-        var oCards = '';
-        if (!over.freeUsed) oCards += card(byId[FREE_ID], 1, false);
-        TICKETS.forEach(function (t) {
-          if (over.combo.items && over.combo.items[t.id]) oCards += card(t, over.combo.items[t.id], false);
-        });
+        var rmCards = TICKETS.map(function (t) {
+          return over.remove[t.id] ? card(t, over.remove[t.id], 'remove') : '';
+        }).join('');
+        var addCards = TICKETS.map(function (t) {
+          return over.add[t.id] ? card(t, over.add[t.id], 'add') : '';
+        }).join('');
         h += '<div style="background:#fffbe6;border:1px solid #f0c36d;border-radius:10px;padding:10px 12px;margin-top:10px">' +
              '<div style="font-weight:800;color:#8a5a00">💡 필요보다 많이 적용됐어요 — ' + over.save.toLocaleString() + '원 절약 가능</div>' +
-             '<div style="color:#555;margin:4px 0 8px;font-size:12px">지금 유료 할인 <b>' + over.curPaid.toLocaleString() + '원</b> 적용됨. 아래 조합이면 <b>같은 0원</b>인데 <b>' + over.optCost.toLocaleString() + '원</b>입니다.</div>' +
-             oCards +
-             '<div style="color:#777;font-size:12px;margin-top:4px">실수로 많이 적용했다면 <b>지금 유료 할인을 빼고</b> 위 조합으로 다시 적용하세요. 일부러 넉넉히 둔 거면 그대로 둬도 됩니다.</div>' +
+             '<div style="color:#555;margin:4px 0 8px;font-size:12px">지금 유료 <b>' + over.curPaid.toLocaleString() + '원</b> → <b>' + over.optCost.toLocaleString() + '원</b> (같은 0원). ' +
+             (over.hasAdd ? '아래를 <b>빼고 대신 넣으면</b> 됩니다.' : '아래를 <b>빼기만</b> 하면 됩니다.') + '</div>' +
+             rmCards +
+             (over.hasAdd ? '<div style="margin:6px 0 2px;font-size:12px;color:#8a5a00;font-weight:700">대신 적용하세요</div>' + addCards : '') +
+             '<div style="color:#777;font-size:12px;margin-top:6px">실수로 많이 적용했을 때만 위대로 정리하세요. 일부러 넉넉히 둔 거면 그대로 둬도 됩니다.</div>' +
              '</div>';
       }
     } else {
