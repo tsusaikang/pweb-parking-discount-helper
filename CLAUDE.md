@@ -119,7 +119,14 @@ version.json 은 이제 **설치 페이지 h1 배지 표시**에만 쓰인다(in
   (데스크톱도 `dataSetDtl = eval(data.parkVisitCar)` 로 같은 필드를 쓴다.
   필드 구성은 dataSetDtl 과 동일: discountTypeId·dc_time·discount_name).
 - compat 검사(모바일 모드): #differentTime + 파싱 가능, fncGoDscnt 존재,
-  URL 차량id 숫자, API 3연속 실패 시 차단, parkVisitCar 필드 검증.
+  URL 차량id 숫자, parkVisitCar 필드 검증.
+- **조회 실패는 2종으로 나눈다 (2026-07-22 버그 수정)**: 응답 본문은 왔는데 기대 필드가
+  없으면 `M.structBad` = **구조 변경 → ⛔차단**, 네트워크·세션 등으로 아예 못 받은 건
+  `M.err` = **일시적 → 차단하지 않고 재시도**(데이터 없으면 "연결이 불안정합니다" 대기 화면).
+  예전엔 `M.err >= 3` 을 차단 사유로 써서, **백그라운드에 있다가 돌아오면 ⛔사용금지로
+  굳어버렸다**(브라우저가 백그라운드 fetch 를 끊음 → 새로고침해야 복구). 지금은
+  `document.hidden` 이면 조회 자체를 건너뛰고, `visibilitychange` 로 **포그라운드 복귀 시
+  `M.err`·스로틀을 초기화해 즉시 재조회**한다(리스너는 패널 닫을 때 detachVis 로 해제).
 
 ## 절대 규칙
 

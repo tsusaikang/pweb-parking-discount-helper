@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '1.3.10'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
+  var VERSION = '1.3.11'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -121,7 +121,11 @@
   }
 
   // ── 모바일: 적용 내역 조회 (읽기 전용, 5초 스로틀) ────────────────
-  var M = { applied: null, lastFetch: 0, err: 0 };
+  // 실패를 두 종류로 나눈다 (2026-07-22 버그 수정): 응답 본문은 왔는데 기대 필드가 없으면
+  // **구조 변경**(→차단), 네트워크·세션 등으로 아예 못 받은 건 **일시적**(→차단하지 않고 재시도).
+  // 백그라운드로 내려가면 브라우저가 fetch 를 끊어 연속 실패가 나는데, 예전엔 이게
+  // 구조 비호환과 똑같이 취급돼 ⛔사용금지로 굳어버렸다(새로고침해야 복구).
+  var M = { applied: null, lastFetch: 0, err: 0, structBad: false };
   function mobParams() {
     var seg = location.pathname.split('/'); // ['','discount','doView…',id,token,날짜,cardType]
     // member_id 는 서버가 페이지(사이드 메뉴)에 박아준 "이름(ID)" 패턴에서 추출
@@ -131,6 +135,7 @@
   function mobFetch() {
     var now = Date.now();
     if (now - M.lastFetch < 5000) return;
+    if (document.hidden) return; // 백그라운드에선 시도도, 실패 집계도 하지 않는다
     M.lastFetch = now;
     var p = mobParams();
     try {
@@ -145,9 +150,10 @@
           var arr = j.parkVisitCar;
           if (typeof arr === 'string') { try { arr = JSON.parse(arr); } catch (e) { arr = []; } }
           M.applied = Array.isArray(arr) ? arr : [];
-          M.err = 0;
-        } else { M.err++; }
-      }).catch(function () { M.err++; });
+          M.err = 0; M.structBad = false;
+        } else if (j) { M.structBad = true; } // 응답은 왔는데 기대 필드 없음 = 구조 변경
+        else { M.err++; }                     // HTTP 오류 — 일시적으로 본다
+      }).catch(function () { M.err++; });     // 네트워크·파싱 실패 — 일시적
     } catch (e) { M.err++; }
   }
 
@@ -161,7 +167,7 @@
       else if (parseDT(dt.value || dt.textContent) == null) bad.push('주차시간 형식 다름');
       if (typeof window.fncGoDscnt !== 'function') bad.push('fncGoDscnt 함수 없음');
       if (!/^\d+$/.test((location.pathname.split('/')[3] || ''))) bad.push('URL 차량id 없음');
-      if (M.err >= 3) bad.push('조회 API 연속 실패');
+      if (M.structBad) bad.push('조회 API 응답 형식 다름'); // 일시적 실패(M.err)는 차단하지 않는다
       if (M.applied && M.applied.length) {
         var d0 = M.applied[0];
         if (!('discountTypeId' in d0) || !('dc_time' in d0) || !('discount_name' in d0)) bad.push('적용내역 필드 다름');
@@ -273,7 +279,10 @@
     var carKey, carNo, rawE, appliedRaw;
     if (MOB_PAGE) {
       mobFetch(); // 5초 스로틀 내장
-      if (M.applied === null) { waiting('적용 내역을 조회하는 중…'); return; }
+      if (M.applied === null) {
+        waiting(M.err >= 3 ? '연결이 불안정합니다.<br>다시 시도 중…' : '적용 내역을 조회하는 중…');
+        return;
+      }
       carKey = 'M' + location.pathname.split('/')[3];
       carNo = (document.getElementById('carNo') || {}).value || '-';
       var dt = document.getElementById('differentTime');
@@ -459,9 +468,14 @@
     el.innerHTML = h;
   }
 
+  function detachVis() {
+    if (window.__pk_vis) { document.removeEventListener('visibilitychange', window.__pk_vis); window.__pk_vis = null; }
+  }
+
   var old = document.getElementById('__pk_panel');
   if (old) { // 다시 누르면 닫기(토글)
     clearInterval(window.__pk_t);
+    detachVis();
     document.body.style.paddingRight = window.__pk_pad0 || '';
     old.remove(); return;
   }
@@ -513,9 +527,18 @@
 
   document.getElementById('__pk_x').onclick = function () {
     clearInterval(window.__pk_t);
+    detachVis();
     document.body.style.paddingRight = window.__pk_pad0 || '';
     p.remove();
   };
+
+  // 백그라운드에 있다가 돌아오면: 일시적 실패 카운터를 지우고 즉시 재조회한다
+  // (모바일 브라우저가 백그라운드에서 fetch 를 끊어 생기는 오탐 방지)
+  if (window.__pk_vis) document.removeEventListener('visibilitychange', window.__pk_vis);
+  window.__pk_vis = function () {
+    if (!document.hidden) { M.err = 0; M.lastFetch = 0; try { render(); } catch (e) {} }
+  };
+  document.addEventListener('visibilitychange', window.__pk_vis);
 
   // 도크의 "설치·안내" 를 누르면 프로젝트 안내 페이지를 새 탭으로 연다
   // (주차 페이지를 잃지 않도록 same-tab 이동은 하지 않는다)
