@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.10';
+  var VERSION = '2026.07.22.11';
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -221,9 +221,8 @@
       '<div style="margin-top:8px;color:#999;font-size:11px">사유: ' + bad.join(' · ') + '</div>';
   }
 
-  // 차량별 추적 상태: 패널을 연 뒤 새로 적용된 할인을 알아내기 위한 기준(base)과
-  // 경과시간 보간을 위한 (E, seenAt)
-  var S = { carId: null, E: null, seenAt: 0, base: null, baseAt: 0 };
+  // 차량별 추적 상태: 경과시간 실시간 보간을 위한 (E=마지막 읽은 경과분, seenAt=읽은 시각)
+  var S = { carId: null, E: null, seenAt: 0 };
 
   // kind: 'applied'(✓적용됨) | 'add'(적용 필요) | 'remove'(빼세요). 하위호환: true→applied, false→add
   function card(t, cnt, kind) {
@@ -297,29 +296,20 @@
     }
     if (rawE == null || isNaN(rawE)) { waiting('경과시간을 읽는 중…'); return; }
 
-    // 차량이 바뀌면 추적 리셋. PC 는 상세가 비동기라 base 스냅샷을 1초 늦춘다.
+    // 차량이 바뀌면 경과시간 보간 추적을 리셋한다.
     if (carKey !== S.carId) {
-      S = { carId: carKey, E: null, seenAt: now, base: null, baseAt: now + (MOB_PAGE ? 0 : 1000) };
+      S = { carId: carKey, E: null, seenAt: now };
     }
     if (rawE !== S.E) { S.E = rawE; S.seenAt = now; } // 사이트가 재조회하면 기준 갱신
     var elapsed = S.E + (now - S.seenAt) / 60000;     // 현재 경과(분, 실시간 보간)
 
-    var counts = {}, sum = 0, list = [];
+    var counts = {}, sum = 0;
     appliedRaw.forEach(function (a) {
       counts[a.typeId] = (counts[a.typeId] || 0) + 1;
       sum += a.min;
-      list.push(a.name + '(' + a.min + '분)');
     });
-    if (S.base === null && now >= S.baseAt) S.base = counts;
 
     var covered = BASE_FREE + sum, margin = covered - elapsed;
-
-    // 패널을 연 뒤 새로 적용된 할인 (id→장수)
-    var newly = {};
-    if (S.base) Object.keys(counts).forEach(function (id) {
-      var d = counts[id] - (S.base[id] || 0);
-      if (d > 0) newly[id] = d;
-    });
 
     // ── 모바일: 우측 세로 도크용 최소 정보 레이아웃 (2026-07-21 사용자 요청) ──
     // 페이지에 이미 보이는 차량번호·주차시간 등은 생략. 상태 + 핵심 수치 +
@@ -397,14 +387,15 @@
 
     var h = '';
     h += '<div style="font-size:15px;font-weight:700;margin-bottom:2px">' + carNo + '</div>';
-    h += '<div style="color:#555;margin-bottom:8px">경과 <b>' + fmt(elapsed) + '</b> · 기본무료 ' + BASE_FREE + '분</div>';
-    h += '<div style="margin-bottom:4px;color:#555">적용된 할인: ' +
-         (list.length ? list.join(', ') : '<span style="color:#999">없음</span>') +
-         ' · 커버 <b>' + fmt(covered) + '</b></div>';
+    h += '<div style="color:#555;margin-bottom:8px">경과 <b>' + fmt(elapsed) + '</b> · 커버 <b>' + fmt(covered) +
+         '</b> <span style="color:#999">(기본무료 ' + BASE_FREE + '분 + 적용 할인)</span></div>';
 
-    var appliedCards = Object.keys(newly).map(function (id) {
-      return byId[id] ? card(byId[id], newly[id], true) : '';
+    // 현재 "실제로 적용돼 있는" 할인 전부를 ✓카드로 (새로고침해도 그대로 보이게 — 2026-07-22
+    // 버그 수정. 예전엔 패널 연 뒤 새로 적용된 것만 보여서 새로고침 시 사라졌다).
+    var appliedCards = Object.keys(counts).map(function (id) {
+      return byId[id] ? card(byId[id], counts[id], 'applied') : '';
     }).join('');
+    if (appliedCards) appliedCards = '<div style="margin:8px 0 2px;font-weight:700;color:#555">현재 적용된 할인</div>' + appliedCards;
 
     if (margin >= 0) {
       setStatus('#137a3f', '✓ 0원 완료');
