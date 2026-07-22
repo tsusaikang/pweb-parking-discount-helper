@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '1.3.9'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
+  var VERSION = '1.3.10'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -323,7 +323,7 @@
         var m = {
           applied: { s: 'background:#e6f7ed;border:1px solid #86d9a8;color:#137a3f', p: '✓ ' },
           add:     { s: 'background:#fff8e8;border:1px solid #f0c36d;color:#8a5a00', p: '' },
-          remove:  { s: 'background:#fdecea;border:1px solid #f1a9a0;color:#b02a1c', p: '❌ ' }
+          remove:  { s: 'background:#fdecea;border:1px solid #f1a9a0;color:#b02a1c', p: '' }
         }[kind];
         return '<div style="margin:5px 0;padding:7px 3px;border-radius:10px;font-weight:800;font-size:12px;text-align:center;line-height:1.25;' + m.s + '">' +
           m.p + t.n + '<br><span style="font-size:13px">×' + cnt + '</span></div>';
@@ -360,8 +360,9 @@
           var glab = function (txt, color) {
             return '<div style="font-size:12px;font-weight:800;color:' + color + ';text-align:center;margin:8px 0 2px">' + txt + '</div>';
           };
-          mh += '<div style="border-top:1px solid rgba(0,0,0,.08);margin-top:9px;padding-top:9px">' +
-            // 헤드라인은 박스(주차권 모양)가 아니라 아이콘+큰 금액 텍스트로 — 칩과 구분
+          // 구획 전체를 옅은 노란 박스로 감싼다 (PC 와 동일 — 빼기/넣기 배경 통일).
+          // 헤드라인은 박스 없이 아이콘+금액 텍스트, 칩 앞 ❌ 는 제거(라벨의 ❌ 와 중복 방지).
+          mh += '<div style="background:#fffbe6;border:1px solid #f0c36d;border-radius:10px;padding:8px 6px;margin-top:9px">' +
             '<div style="text-align:center;margin-bottom:3px">' +
               '<div style="font-size:17px;line-height:1">💡</div>' +
               '<div style="font-size:16px;font-weight:800;color:#b45309;line-height:1.15;margin-top:2px">' + mOver.save.toLocaleString() + '원</div>' +
