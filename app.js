@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.7';
+  var VERSION = '2026.07.22.8';
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -309,11 +309,17 @@
     // 페이지에 이미 보이는 차량번호·주차시간 등은 생략. 상태 + 핵심 수치 +
     // 권종 칩(몇 장) + 비용·만료시각을 세로로 쌓는다.
     if (MOBILE) {
+      // 좁은 세로 도크 — 좌우를 아끼고 요소를 위아래로 길게 쌓는다 (2026-07-22 사용자 요청).
+      // 권종 칩은 이름/장수를 두 줄로, 구획마다 얇은 구분선 + 작은 라벨.
       var mchip = function (t, cnt, done) {
-        return '<span style="display:block;margin:4px 0;padding:3px 2px;border-radius:9px;font-weight:800;font-size:11px;text-align:center;' +
+        return '<div style="margin:5px 0;padding:7px 3px;border-radius:10px;font-weight:800;font-size:12px;text-align:center;line-height:1.25;' +
           (done ? 'background:#e6f7ed;border:1px solid #86d9a8;color:#137a3f'
                 : 'background:#fff8e8;border:1px solid #f0c36d;color:#8a5a00') + '">' +
-          (done ? '✓ ' : '') + t.n + ' ×' + cnt + '</span>';
+          (done ? '✓ ' : '') + t.n + '<br><span style="font-size:13px">×' + cnt + '</span></div>';
+      };
+      var section = function (label, inner) {
+        return '<div style="border-top:1px solid rgba(0,0,0,.08);margin-top:8px;padding-top:7px">' +
+          '<div style="font-size:10px;color:#9aa0a6;text-align:center;margin-bottom:3px;line-height:1.3">' + label + '</div>' + inner + '</div>';
       };
       // 현재 적용된 할인 전부를 ✓칩으로 (PC 의 "적용된 할인" 표시에 해당)
       var appliedChips = Object.keys(counts).map(function (id) {
@@ -322,20 +328,22 @@
       var mh;
       if (margin >= 0) {
         setStatus('#137a3f', '✓ 0원 완료');
-        mh = '<div style="text-align:center;font-weight:800;color:#0c5a2e">' +
-             '<div style="font-size:14px">✅ 0원</div>' +
-             '<div style="font-size:15px;margin-top:3px">' + fmt(margin) + '</div>' +
-             '<div style="font-size:11px;color:#137a3f;font-weight:700">남음</div>' +
-             '<div style="font-size:12px;margin-top:5px;color:#137a3f"><b>' + clock(now + margin * 60000) + '</b>까지</div></div>' +
-             appliedChips;
-        // 필요보다 많이 적용됐으면: 절약 배지 + 최소 조합 칩 (같은 0원)
+        mh = '<div style="text-align:center;padding:4px 0 2px">' +
+             '<div style="font-size:22px;line-height:1">✅</div>' +
+             '<div style="font-size:14px;font-weight:800;color:#0c5a2e;margin-top:3px">0원</div>' +
+             '<div style="font-size:17px;font-weight:800;color:#0c5a2e;margin-top:11px;line-height:1.2">' + fmt(margin) + '</div>' +
+             '<div style="font-size:11px;color:#137a3f;font-weight:700;margin-top:1px">남음</div>' +
+             '<div style="font-size:12px;color:#137a3f;margin-top:11px">~<b>' + clock(now + margin * 60000) + '</b></div>' +
+             '</div>';
+        if (appliedChips) mh += section('적용된 할인', appliedChips);
+        // 필요보다 많이 적용됐으면: 절약 라벨 + 최소 조합 칩 (같은 0원)
         var mOver = overApplied(elapsed, counts);
         if (mOver) {
-          mh += '<div style="margin-top:6px;padding:4px 5px;border-radius:8px;background:#fffbe6;border:1px solid #f0c36d;text-align:center;font-size:11px;font-weight:800;color:#8a5a00">💡 -' + mOver.save.toLocaleString() + '원 가능</div>' +
-            (mOver.freeUsed ? '' : mchip(byId[FREE_ID], 1, false)) +
+          var oChips = (mOver.freeUsed ? '' : mchip(byId[FREE_ID], 1, false)) +
             TICKETS.map(function (t) {
               return (mOver.combo.items && mOver.combo.items[t.id]) ? mchip(t, mOver.combo.items[t.id], false) : '';
             }).join('');
+          mh += section('<b style="color:#8a5a00">💡 -' + mOver.save.toLocaleString() + '원 가능</b><br>이 조합으로 바꾸면 절약', oChips);
         }
       } else {
         var mShort = elapsed - covered;
@@ -348,12 +356,15 @@
             return (mCombo.items && mCombo.items[t.id]) ? mchip(t, mCombo.items[t.id], false) : '';
           }).join('');
         setStatus('#c0392b', '⚠ 적용 필요');
-        mh = '<div style="text-align:center;font-weight:800;color:#96281b">' +
-             '<div style="font-size:13px">⚠ 부족</div>' +
-             '<div style="font-size:16px;margin-top:2px">' + fmt(mShort) + '</div></div>' +
-             '<div style="margin-top:5px">' + appliedChips + pendChips + '</div>' +
-             '<div style="text-align:center;color:#555;font-size:11px;margin-top:5px">' + (mCombo.cost || 0).toLocaleString() + '원<br>' +
-             '적용 후 <b>' + clock(now + mMargin * 60000) + '</b>까지</div>';
+        mh = '<div style="text-align:center;padding:4px 0 2px">' +
+             '<div style="font-size:18px;line-height:1">⚠</div>' +
+             '<div style="font-size:13px;font-weight:800;color:#96281b;margin-top:3px">부족</div>' +
+             '<div style="font-size:17px;font-weight:800;color:#96281b;margin-top:9px;line-height:1.2">' + fmt(mShort) + '</div>' +
+             '</div>';
+        mh += section('적용하세요', pendChips);
+        if (appliedChips) mh += section('이미 적용됨', appliedChips);
+        mh += '<div style="text-align:center;color:#555;font-size:11px;margin-top:10px;line-height:1.55"><b>' +
+              (mCombo.cost || 0).toLocaleString() + '원</b><br>적용 후<br>~<b>' + clock(now + mMargin * 60000) + '</b></div>';
       }
       el.innerHTML = mh;
       return;
@@ -433,7 +444,8 @@
   // 대비 zoom 보정 유지 (모바일 전용 페이지는 뷰포트가 정상이라 Z≈1).
   var MOBILE = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches);
   var Z = MOBILE ? Math.min(2.8, Math.max(1, (window.innerWidth || 400) / 400)) : 1;
-  var dockRender = Math.min(170, Math.max(104, (window.innerWidth || 400) * 0.29)); // 화면상 실제 폭
+  // 좁게 — 본문 글씨가 도크에 덜 가리도록 (2026-07-22). 세로로 긴 레이아웃이라 폭이 좁아도 됨.
+  var dockRender = Math.min(130, Math.max(86, (window.innerWidth || 400) * 0.23)); // 화면상 실제 폭
   var DOCKW = Math.round(dockRender / Z); // zoom 반영한 style 폭
 
   var p = document.createElement('div');
@@ -448,7 +460,7 @@
       '<span id="__pk_min" style="cursor:pointer;font-size:15px;padding:2px 4px">▸</span>' + // 접기 — ✕와 반대편
       '<span id="__pk_status" style="font-weight:700;font-size:12px;white-space:nowrap">대기</span>' +
       '<span id="__pk_x" style="cursor:pointer;font-size:15px;padding:2px 4px">✕</span></div>' +
-      '<div id="__pk_body" style="padding:8px 6px"></div>' +
+      '<div id="__pk_body" style="padding:9px 5px"></div>' +
       '<div id="__pk_foot" style="display:none"></div>'
     : '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:12px 12px 0 0;cursor:move;transition:background .3s">' +
       '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
@@ -463,7 +475,7 @@
   window.__pk_pad0 = document.body.style.paddingRight;
   function syncPad() {
     if (!MOBILE) return;
-    try { document.body.style.paddingRight = Math.ceil(p.getBoundingClientRect().width + 4) + 'px'; } catch (e) {}
+    try { document.body.style.paddingRight = Math.ceil(p.getBoundingClientRect().width + 10) + 'px'; } catch (e) {}
   }
 
   document.getElementById('__pk_x').onclick = function () {
