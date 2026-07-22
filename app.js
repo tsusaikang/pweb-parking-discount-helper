@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.11';
+  var VERSION = '2026.07.22.12';
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -330,7 +330,7 @@
       };
       var section = function (label, inner) {
         return '<div style="border-top:1px solid rgba(0,0,0,.08);margin-top:8px;padding-top:7px">' +
-          '<div style="font-size:10px;color:#9aa0a6;text-align:center;margin-bottom:3px;line-height:1.3">' + label + '</div>' + inner + '</div>';
+          '<div style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:4px;line-height:1.35">' + label + '</div>' + inner + '</div>';
       };
       // 현재 적용된 할인 전부를 ✓칩으로 (PC 의 "적용된 할인" 표시에 해당)
       var appliedChips = Object.keys(counts).map(function (id) {
@@ -343,7 +343,7 @@
              '<div style="font-size:22px;line-height:1">✅</div>' +
              '<div style="font-size:14px;font-weight:800;color:#0c5a2e;margin-top:3px">0원</div>' +
              '<div style="font-size:17px;font-weight:800;color:#0c5a2e;margin-top:11px;line-height:1.2">' + fmt(margin) + '</div>' +
-             '<div style="font-size:11px;color:#137a3f;font-weight:700;margin-top:1px">남음</div>' +
+             '<div style="font-size:12px;color:#137a3f;font-weight:700;margin-top:1px">남음</div>' +
              '<div style="font-size:12px;color:#137a3f;margin-top:11px">~<b>' + clock(now + margin * 60000) + '</b></div>' +
              '</div>';
         if (appliedChips) mh += section('적용된 할인', appliedChips);
@@ -358,7 +358,7 @@
           }).join('');
           mh += section('<b style="color:#8a5a00">💡 -' + mOver.save.toLocaleString() + '원 가능</b><br>' +
             (mOver.hasAdd ? '빼고 대신 넣기' : '빼기만'),
-            rmChips + (mOver.hasAdd ? '<div style="font-size:9px;color:#9aa0a6;text-align:center;margin:3px 0 1px">↓ 대신</div>' + addChips : ''));
+            rmChips + (mOver.hasAdd ? '<div style="font-size:11px;color:#6b7280;text-align:center;margin:4px 0 2px">↓ 대신</div>' + addChips : ''));
         }
       } else {
         var mShort = elapsed - covered;
@@ -378,7 +378,7 @@
              '</div>';
         mh += section('적용하세요', pendChips);
         if (appliedChips) mh += section('이미 적용됨', appliedChips);
-        mh += '<div style="text-align:center;color:#555;font-size:11px;margin-top:10px;line-height:1.55"><b>' +
+        mh += '<div style="text-align:center;color:#555;font-size:12px;margin-top:10px;line-height:1.55"><b>' +
               (mCombo.cost || 0).toLocaleString() + '원</b><br>적용 후<br>~<b>' + clock(now + mMargin * 60000) + '</b></div>';
       }
       el.innerHTML = mh;
@@ -481,7 +481,7 @@
       '<span id="__pk_x" style="cursor:pointer;font-size:15px;padding:2px 4px">✕</span></div>' +
       '<div id="__pk_body" style="padding:9px 5px"></div>' +
       '<div id="__pk_foot" style="padding:5px 4px;text-align:center;border-top:1px solid rgba(0,0,0,.08)">' +
-      '<span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700;font-size:10px">ℹ️ 설치·안내</span></div>'
+      '<span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700;font-size:11px">ℹ️ 설치·안내</span></div>'
     : '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:12px 12px 0 0;cursor:move;transition:background .3s">' +
       '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
       '<span id="__pk_status" style="font-weight:700">대기</span>' +
