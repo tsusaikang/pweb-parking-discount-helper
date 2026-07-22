@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.12';
+  var VERSION = '2026.07.22.13';
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -347,7 +347,8 @@
              '<div style="font-size:12px;color:#137a3f;margin-top:11px">~<b>' + clock(now + margin * 60000) + '</b></div>' +
              '</div>';
         if (appliedChips) mh += section('적용된 할인', appliedChips);
-        // 필요보다 많이 적용됐으면: 뺄 것/넣을 것 칩 (같은 0원)
+        // 필요보다 많이 적용됐으면: 헤드라인(절약액) + 색 맞춘 그룹 라벨(빼기/넣기).
+        // 세 문구의 위계를 구분 — 노란 박스=요약, 빨강 라벨=아래 빨강 칩, 주황 라벨=아래 주황 칩.
         var mOver = overApplied(elapsed, counts);
         if (mOver) {
           var rmChips = TICKETS.map(function (t) {
@@ -356,9 +357,14 @@
           var addChips = TICKETS.map(function (t) {
             return mOver.add[t.id] ? mchip(t, mOver.add[t.id], 'add') : '';
           }).join('');
-          mh += section('<b style="color:#8a5a00">💡 -' + mOver.save.toLocaleString() + '원 가능</b><br>' +
-            (mOver.hasAdd ? '빼고 대신 넣기' : '빼기만'),
-            rmChips + (mOver.hasAdd ? '<div style="font-size:11px;color:#6b7280;text-align:center;margin:4px 0 2px">↓ 대신</div>' + addChips : ''));
+          var glab = function (txt, color) {
+            return '<div style="font-size:12px;font-weight:800;color:' + color + ';text-align:center;margin:8px 0 2px">' + txt + '</div>';
+          };
+          mh += '<div style="border-top:1px solid rgba(0,0,0,.08);margin-top:9px;padding-top:9px">' +
+            '<div style="text-align:center;font-weight:800;color:#8a5a00;background:#fffbe6;border:1px solid #f0c36d;border-radius:9px;padding:6px 3px;font-size:13px;line-height:1.3">💡 -' + mOver.save.toLocaleString() + '원<br>절약 가능</div>' +
+            glab('❌ 빼세요', '#b02a1c') + rmChips +
+            (mOver.hasAdd ? glab('➕ 대신 넣기', '#8a5a00') + addChips : '') +
+            '</div>';
         }
       } else {
         var mShort = elapsed - covered;
