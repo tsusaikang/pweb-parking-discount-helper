@@ -23,7 +23,8 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.8';
+  var VERSION = '2026.07.22.9';
+  var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
@@ -461,14 +462,15 @@
       '<span id="__pk_status" style="font-weight:700;font-size:12px;white-space:nowrap">대기</span>' +
       '<span id="__pk_x" style="cursor:pointer;font-size:15px;padding:2px 4px">✕</span></div>' +
       '<div id="__pk_body" style="padding:9px 5px"></div>' +
-      '<div id="__pk_foot" style="display:none"></div>'
+      '<div id="__pk_foot" style="padding:5px 4px;text-align:center;border-top:1px solid rgba(0,0,0,.08)">' +
+      '<span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700;font-size:10px">ℹ️ 설치·안내</span></div>'
     : '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:12px 12px 0 0;cursor:move;transition:background .3s">' +
       '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
       '<span id="__pk_status" style="font-weight:700">대기</span>' +
       '<span id="__pk_min" style="cursor:pointer;font-size:16px;padding:2px 6px">▾</span>' +
       '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
       '<div id="__pk_body" style="padding:12px"></div>' +
-      '<div id="__pk_foot" style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br>문의: tsusai@msn.com</div>';
+      '<div id="__pk_foot" style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br><span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700">ℹ️ 설치·사용 안내 페이지 열기</span> · 문의: tsusai@msn.com</div>';
   document.body.appendChild(p);
 
   // 모바일: 도크 폭만큼 본문 오른쪽 여백을 만들어 가려지는 영역이 없게 한다. 닫으면 원복.
@@ -484,12 +486,19 @@
     p.remove();
   };
 
+  // 도크의 "설치·안내" 를 누르면 프로젝트 안내 페이지를 새 탭으로 연다
+  // (주차 페이지를 잃지 않도록 same-tab 이동은 하지 않는다)
+  var homeEl = document.getElementById('__pk_home');
+  if (homeEl) homeEl.onclick = function () {
+    try { window.open(HOME, '_blank', 'noopener'); } catch (e) { location.href = HOME; }
+  };
+
   // 접기/펴기 — 모바일 도크는 얇은 띠(상태색만 보임)로, 데스크톱은 헤더만 남긴다
   var minimized = false;
   document.getElementById('__pk_min').onclick = function () {
     minimized = !minimized;
     document.getElementById('__pk_body').style.display = minimized ? 'none' : '';
-    document.getElementById('__pk_foot').style.display = (minimized || MOBILE) ? 'none' : '';
+    document.getElementById('__pk_foot').style.display = minimized ? 'none' : '';
     if (MOBILE) {
       p.style.width = (minimized ? Math.ceil(34 / Z) : DOCKW) + 'px';
       var st = document.getElementById('__pk_status');
