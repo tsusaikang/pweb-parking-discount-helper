@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.13';
+  var VERSION = '2026.07.22.14';
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -361,7 +361,12 @@
             return '<div style="font-size:12px;font-weight:800;color:' + color + ';text-align:center;margin:8px 0 2px">' + txt + '</div>';
           };
           mh += '<div style="border-top:1px solid rgba(0,0,0,.08);margin-top:9px;padding-top:9px">' +
-            '<div style="text-align:center;font-weight:800;color:#8a5a00;background:#fffbe6;border:1px solid #f0c36d;border-radius:9px;padding:6px 3px;font-size:13px;line-height:1.3">💡 -' + mOver.save.toLocaleString() + '원<br>절약 가능</div>' +
+            // 헤드라인은 박스(주차권 모양)가 아니라 아이콘+큰 금액 텍스트로 — 칩과 구분
+            '<div style="text-align:center;margin-bottom:3px">' +
+              '<div style="font-size:17px;line-height:1">💡</div>' +
+              '<div style="font-size:16px;font-weight:800;color:#b45309;line-height:1.15;margin-top:2px">' + mOver.save.toLocaleString() + '원</div>' +
+              '<div style="font-size:11px;font-weight:700;color:#8a5a00">절약 가능</div>' +
+            '</div>' +
             glab('❌ 빼세요', '#b02a1c') + rmChips +
             (mOver.hasAdd ? glab('➕ 대신 넣기', '#8a5a00') + addChips : '') +
             '</div>';
