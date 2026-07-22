@@ -58,6 +58,14 @@
   .bigstep{border:2px solid #2b3a67;border-radius:14px;padding:16px 18px;margin:18px 0;background:#fff}
   .bigstep .bh{font-size:17px;font-weight:800;display:flex;gap:10px;align-items:center;margin-bottom:8px}
   .bignum{width:30px;height:30px;border-radius:50%;background:#2b3a67;color:#fff;font-size:16px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  /* 설치 3단계: 명확히 구분되는 하위 단계 카드 */
+  .sstep{border:1px solid #cdd6e4;border-left:5px solid #137a3f;border-radius:10px;padding:12px 15px;margin:12px 0;background:#f6faf7}
+  .sstep .st{font-weight:800;font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .sstep .stn{width:24px;height:24px;border-radius:50%;background:#137a3f;color:#fff;font-size:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .sstep ol{margin:4px 0}
+  .stbtn{display:inline-block;background:#fff;border:1.5px solid #2b3a67;color:#2b3a67;text-decoration:none;font-weight:700;padding:8px 15px;border-radius:8px;font-size:14px;margin:5px 8px 3px 0}
+  .stbtn:active{transform:translateY(1px)}
+  .stwarn{background:#fff7e6;border:1px solid #ffd88a;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -91,15 +99,31 @@
     <p style="margin:2px 0 10px">기기별로 <b>Tampermonkey(또는 Userscripts) 확장을 설치</b>한 뒤,
        아래 <b>초록 버튼</b>으로 스크립트를 등록하면 끝입니다.</p>
 
-    <p style="margin:10px 0 4px"><b>💻 PC — 크롬·엣지</b></p>
-    <ol style="margin:0">
-      <li>브라우저 확장 스토어에서 <b>Tampermonkey</b> 설치</li>
-      <li><b>필수 설정</b>: 주소창에 <code>edge://extensions</code>(크롬은 <code>chrome://extensions</code>) 입력 →
-          <b>내 확장</b>에서 <b>Tampermonkey</b> 클릭(세부 정보) → <b>“사용자 스크립트 허용”</b> 토글 <b>ON</b>.
-          이걸 안 켜면 설치돼도 <b>조용히 동작하지 않습니다</b>(브라우저 보안 규격.
-          항목이 없는 구버전은 확장 페이지의 “개발자 모드”를 켜세요).</li>
-      <li>아래 <b>초록 버튼</b> 클릭 → Tampermonkey 의 설치 확인 화면(스크립트 이름 "pweb 주차할인 계산기"가 보임)에서 <b>설치</b></li>
-    </ol>
+    <p style="margin:10px 0 4px"><b>💻 PC — 크롬·엣지</b> <span class="muted">아래 <b>3단계</b>를 순서대로 하세요.</span></p>
+
+    <div class="sstep">
+      <div class="st"><span class="stn">1</span>Tampermonkey 확장 설치</div>
+      <p style="margin:0 0 6px">쓰는 브라우저의 스토어에서 <b>Tampermonkey</b>(무료)를 설치합니다. 아래 버튼을 누르면 설치 페이지로 바로 이동합니다.</p>
+      <a class="stbtn" href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd" target="_blank" rel="noopener">🟦 Edge 스토어에서 설치</a>
+      <a class="stbtn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank" rel="noopener">🟨 Chrome 웹스토어에서 설치</a>
+      <p class="muted" style="margin:6px 0 0">열린 페이지에서 <b>“설치”/“가져오기”</b>를 눌러 확장을 추가하세요. (<code>edge://extensions</code> 목록에는 <b>설치한 뒤에야</b> Tampermonkey가 나타납니다.)</p>
+    </div>
+
+    <div class="sstep">
+      <div class="st"><span class="stn">2</span>확장 설정 — “사용자 스크립트 허용” 켜기 <span style="color:#c0392b">(필수)</span></div>
+      <ol style="margin:0">
+        <li>주소창에 <code>edge://extensions</code>(크롬은 <code>chrome://extensions</code>) 입력</li>
+        <li><b>내 확장</b>에서 <b>Tampermonkey</b> → <b>세부 정보</b> 클릭</li>
+        <li><b>“사용자 스크립트 허용”</b> 토글을 <b>ON</b> (항목이 없는 구버전은 “개발자 모드”를 켜세요)</li>
+      </ol>
+      <div class="stwarn">⚠️ 이걸 안 켜면 설치돼도 <b>아무 반응 없이 조용히 동작하지 않습니다</b>(브라우저 보안 규격).
+        <b>토글을 켠 뒤에는 Edge를 완전히 종료했다가 다시 켜세요</b> — 그래야 적용됩니다(창 새로고침만으론 부족).</div>
+    </div>
+
+    <div class="sstep">
+      <div class="st"><span class="stn">3</span>스크립트 설치 — 아래 초록 버튼</div>
+      <p style="margin:0">이 페이지 맨 아래의 <b>초록 버튼</b>을 누르면 Tampermonkey 설치 확인 화면(스크립트 이름 <b>"pweb 주차할인 계산기"</b>)이 뜹니다. 거기서 <b>설치</b>를 누르면 끝입니다.</p>
+    </div>
 
     <p style="margin:14px 0 4px"><b>📱 Android — Edge·Firefox</b> <span class="muted">(안드로이드 크롬은 확장 미지원 → 방법 B)</span></p>
     <ol style="margin:0">
