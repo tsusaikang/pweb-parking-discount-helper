@@ -66,6 +66,27 @@
   .stbtn{display:inline-block;background:#fff;border:1.5px solid #2b3a67;color:#2b3a67;text-decoration:none;font-weight:700;padding:8px 15px;border-radius:8px;font-size:14px;margin:5px 8px 3px 0}
   .stbtn:active{transform:translateY(1px)}
   .stwarn{background:#fff7e6;border:1px solid #ffd88a;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13px;line-height:1.6}
+  /* 접이식 섹션 (방법 B 기본 접힘) */
+  details.collapse{border:1px solid #d3d9e2;border-radius:12px;margin:18px 0;background:#fbfcfd}
+  details.collapse>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  details.collapse>summary::-webkit-details-marker{display:none}
+  details.collapse>summary .cnum{width:26px;height:26px;border-radius:50%;background:#8a94a6;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  details.collapse>summary .ctitle{font-weight:800;font-size:17px;color:#2b3a67}
+  details.collapse>summary .csub{font-size:12px;font-weight:600;color:#6b7280}
+  details.collapse>summary::after{content:"펼치기 ▾";margin-left:auto;font-size:13px;font-weight:800;color:#2b6cb0;white-space:nowrap;background:#eaf1fb;border:1px solid #b8d0ef;border-radius:8px;padding:4px 10px}
+  details.collapse[open]>summary::after{content:"접기 ▴";background:#f1f3f5;border-color:#d5d9de;color:#555}
+  details.collapse[open]>summary{border-bottom:1px solid #e5e8ee}
+  details.collapse:not([open])>summary:hover{background:#f4f7fb;border-radius:12px}
+  details.collapse .cbody{padding:6px 16px 18px}
+  /* 버전 이력 */
+  .chlog .rel{border-left:3px solid #d3d9e2;padding:0 0 12px 15px;margin-left:6px}
+  .chlog .rel:last-child{padding-bottom:0}
+  .chlog .vtag{display:inline-block;background:#2b3a67;color:#fff;font-size:12px;font-weight:800;padding:1px 9px;border-radius:8px;margin-right:7px}
+  .chlog .vtag.minor{background:#137a3f}
+  .chlog .vtag.major{background:#8a2b2b}
+  .chlog .vdate{color:#999;font-size:12px}
+  .chlog .rel p{margin:5px 0 0;font-size:13px;color:#444;line-height:1.6}
+  .vrule{background:#f6f8fb;border:1px solid #e0e5ec;border-radius:10px;padding:10px 14px;font-size:13px;color:#555;line-height:1.7;margin:8px 0 16px}
 </style>
 </head>
 <body>
@@ -145,7 +166,9 @@
     </div>
   </div>
 
-  <h2>4. 방법 B — 북마클릿 설치 (확장이 안 되는 환경용)</h2>
+  <details class="collapse" id="mB">
+  <summary><span class="cnum">4</span><span class="ctitle">방법 B — 북마클릿 설치</span><span class="csub">확장이 안 되는 환경용 (회사 PC·안드로이드 크롬)</span></summary>
+  <div class="cbody">
   <p><b>북마클릿</b>은 "작은 프로그램이 담긴 북마크(즐겨찾기)"입니다. 누르면 페이지 이동 대신
      <b>지금 보고 있는 페이지 위에서 잠깐 실행</b>됩니다. 앱 설치가 아니라 북마크 한 줄이
      추가되는 것뿐이라 지우면 흔적 없이 사라집니다. 자동 실행이 아니므로 쓸 때마다
@@ -323,8 +346,10 @@
     </div>
   </div>
   </div><!-- /단계2 -->
-  </div><!-- /방법 B -->
+  </div><!-- /단계2 안 phone bigstep -->
   <div class="muted">이 페이지 주소를 카톡 등으로 공유하면, 받은 사람도 휴대폰에서 바로 이 복사 버튼을 쓸 수 있습니다.</div>
+  </div><!-- /cbody -->
+  </details><!-- /방법 B -->
 
   <h2>5. 사용법 — 딱 세 단계</h2>
   <ol>
@@ -415,6 +440,39 @@
      어떤 값도 외부로 전송하거나 저장하지 않습니다. 계정 정보도 다루지 않습니다.
      외부와의 통신은 클릭 시 이 페이지에서 계산기 코드를 <b>받아오는 것</b> 하나뿐이며,
      이때도 차량번호 등 어떤 데이터도 함께 보내지 않습니다.</p>
+
+  <h2>10. 버전 이력</h2>
+  <div class="vrule">
+    버전은 <b>대.중.소</b> 세 자리로 매깁니다.
+    <b>대</b>(첫 자리) = 쓰는 방식이 근본적으로 바뀌는 큰 변화 ·
+    <b>중</b>(둘째 자리) = 새 기능 추가 ·
+    <b>소</b>(셋째 자리) = 버그 수정·문구·UI 다듬기.
+    <span class="muted">(패널 하단의 <code>v2026.…</code> 는 "항상 최신 실행"을 확인하는 빌드 날짜 표시이고, 아래는 기능 기준 이력입니다.)</span>
+  </div>
+  <div class="chlog">
+    <div class="rel"><span class="vtag">v1.3.1</span><span class="vdate">2026-07-22</span>
+      <p>설치 안내에서 <b>방법 B(북마클릿)를 기본 접힘</b>으로 정리하고, 이 <b>버전 이력</b>을 문서 끝에 추가했습니다.</p></div>
+    <div class="rel"><span class="vtag minor">v1.3.0</span><span class="vdate">2026-07-22</span>
+      <p><b>초과적용 감지</b> — 이미 0원인데 더 싸게 만들 수 있으면 "N원 절약 가능"과 최소 조합을 안내합니다. 추천 조합도 같은 비용이면 장수가 적게(예: 30분권 7장 → 1시간권 3장+30분권 1장) 정리했습니다.</p></div>
+    <div class="rel"><span class="vtag">v1.2.2</span><span class="vdate">2026-07-22</span>
+      <p>PC 설치 안내를 <b>3단계 카드</b>로 나누고 <b>Edge·Chrome 스토어 직링크</b>를 넣었습니다. "사용자 스크립트 허용" 토글을 켠 뒤 <b>브라우저를 완전히 재시작</b>해야 한다는 안내를 추가했습니다.</p></div>
+    <div class="rel"><span class="vtag">v1.2.1</span><span class="vdate">2026-07-22</span>
+      <p>설치 문서 대개편 — <b>자동 실행(방법 A)을 메인</b>으로, 북마클릿(방법 B)을 차선으로 배치했습니다.</p></div>
+    <div class="rel"><span class="vtag minor">v1.2.0</span><span class="vdate">2026-07-21</span>
+      <p><b>유저스크립트 자동 실행</b> 방식 도입 — 확장을 설치하면 할인등록 화면을 열 때 계산기가 <b>자동으로</b> 뜹니다(PC·모바일). 스크립트 자체도 자동 갱신됩니다.</p></div>
+    <div class="rel"><span class="vtag">v1.1.3</span><span class="vdate">2026-07-21</span>
+      <p>모바일 도크를 <b>떠 있는 반투명 박스</b>로 바꾸고, 적용된 할인을 ✓칩으로 표시, 손가락 드래그로 위치를 옮길 수 있게 했습니다.</p></div>
+    <div class="rel"><span class="vtag">v1.1.2</span><span class="vdate">2026-07-21</span>
+      <p>모바일 <b>우측 세로 도크</b> + 최소 정보 레이아웃(하단 시트가 페이지를 가리던 문제 해결). 조회 화면 오탐·자동 실행 침묵 처리를 추가했습니다.</p></div>
+    <div class="rel"><span class="vtag minor">v1.1.0</span><span class="vdate">2026-07-21</span>
+      <p><b>로더 방식 전환</b> — 북마크엔 초소형 로더만 넣고 본체는 실행할 때마다 최신으로 받아 옵니다(모바일 북마크 URL 길이 한계 해결). <b>모바일 전용 할인등록 화면</b>을 지원합니다.</p></div>
+    <div class="rel"><span class="vtag">v1.0.2</span><span class="vdate">2026-07-21</span>
+      <p>닫기(✕) 버튼 첫 클릭이 안 먹던 버그를 수정했습니다.</p></div>
+    <div class="rel"><span class="vtag">v1.0.1</span><span class="vdate">2026-07-21</span>
+      <p>할인권 <b>장수 배지</b>를 강조하고, 로그인 페이지에서 "사용 금지"가 잘못 뜨던 문제를 고쳤습니다(위치 기준 3단계 안내). 푸터에 문의 이메일을 넣었습니다.</p></div>
+    <div class="rel"><span class="vtag major">v1.0.0</span><span class="vdate">2026-07-21</span>
+      <p><b>최초 공개.</b> 0원까지 필요한 할인권을 <b>최소 비용 조합</b>으로 계산, 기본무료 30분 반영, 0원 상태의 여유 시간·만료 시각 실시간 표시, <b>호환성 가드</b>(구조가 다르면 스스로 멈춤), 모바일 지원, GitHub Pages 공개 배포 + 버전 알림 + 검색엔진 등록.</p></div>
+  </div>
 
 <!-- 북마클릿 = 초소형 로더. 실제 계산기(app.js)는 클릭 시마다 이 사이트에서
      항상 최신으로 받아 실행된다 (2026-07-21 로더 방식 전환 — 모바일 북마크의
