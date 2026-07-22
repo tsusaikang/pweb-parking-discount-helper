@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '2026.07.22.14';
+  var VERSION = '1.3.9'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -492,7 +492,8 @@
       '<span id="__pk_x" style="cursor:pointer;font-size:15px;padding:2px 4px">✕</span></div>' +
       '<div id="__pk_body" style="padding:9px 5px"></div>' +
       '<div id="__pk_foot" style="padding:5px 4px;text-align:center;border-top:1px solid rgba(0,0,0,.08)">' +
-      '<span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700;font-size:11px">ℹ️ 설치·안내</span></div>'
+      '<span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700;font-size:11px">ℹ️ 설치·안내</span>' +
+      '<div style="color:#aaa;font-size:10px;margin-top:2px">v' + VERSION + '</div></div>'
     : '<div id="__pk_head" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#6b7280;color:#fff;border-radius:12px 12px 0 0;cursor:move;transition:background .3s">' +
       '<b>pweb 주차할인 계산기</b><span style="display:flex;align-items:center;gap:10px">' +
       '<span id="__pk_status" style="font-weight:700">대기</span>' +

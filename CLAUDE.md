@@ -51,12 +51,14 @@ Tampermonkey 유저스크립트는 회사 PC 에 설치가 어려울 수 있어 
 index.html 을 `https://tsusaikang.github.io/pweb-parking-discount-helper` 에 올려 배포한다
 (2026-07-21 확정 — GitHub Pages 서브도메인. 커스텀 도메인 대비 만료·탈취 위험이
 없고 무료라서 선택. version.json CORS 는 GitHub Pages 가 기본 허용).
-북마클릿은 자동 업데이트가 불가능하므로: 패널을 열 때 1회 `HOME/version.json` 을
-fetch 해 `VERSION` 상수와 다르면 패널 상단에 깜빡이는(👉 `__pk_blink` keyframes)
-주황 배너 + 새창 링크를 띄운다. **데이터는 아무것도 보내지 않는 정적 파일 GET
-하나뿐** — "외부 전송 없음" 방침의 유일한 예외로 사용자가 승인함. 실패는 무시
-(계산 기능과 무관). 배포 절차: 두 파일 VERSION ↑ → version.json 같은 값으로 ↑
-→ 재배포. `_headers` 는 Cloudflare Pages 용 CORS 설정(GitHub Pages 는 불필요).
+**버전 체계 (2026-07-22 사용자 요청 — semver 로 통일)**: 예전엔 도구 하단만 날짜형
+(`2026.07.22.N`)이고 index.html 이력은 대.중.소였다. 이제 **셋 다 대.중.소 하나로 통일** —
+`app.js` `VERSION` 상수 = `version.json` = index.html 이력 최상단 = 같은 `v대.중.소`.
+도크 하단(데스크톱 푸터·모바일 푸터)에 `v'+VERSION` 으로 표시하고, 설치 페이지 h1 배지는
+`version.json` 을 fetch 해 표시한다. 규칙: 대=쓰는 방식 변화, 중=새 기능, 소=버그·문구·UI.
+**배포 절차: 변경 시 `app.js VERSION`·`version.json`·index.html 이력 항목 3곳을 같은
+semver 로 올리고 push.** (app.js 는 version.json 을 fetch 하지 않는다 — 로더가 늘 최신
+app.js 를 받으므로 구버전 배너 로직은 폐기됨. `_headers` 는 Cloudflare 용, GitHub Pages 불필요.)
 
 검색 등록 상태 (2026-07-21): robots.txt·sitemap.xml·.nojekyll 배포됨.
 **Google** — Search Console 소유권 확인 파일 `googleefc4499566ba1a64.html`
@@ -72,8 +74,8 @@ fetch 해 `VERSION` 상수와 다르면 패널 상단에 깜빡이는(👉 `__pk
 안 되는 것으로 확정). 그래서 북마크에는 271자 로더만 넣고 본체(app.js)를
 클릭 시마다 받아 실행한다. 사이트에 CSP 없음 — github.io 스크립트 로드 실측
 성공. 항상 최신 실행이므로 **배포 = app.js 수정 후 push 가 전부**.
-version.json 은 구버전(코드 내장형) 사용자에게 재설치 배너를 띄우는 용도로만
-유지 — 값은 app.js 의 VERSION 과 계속 맞춰 둔다.
+version.json 은 이제 **설치 페이지 h1 배지 표시**에만 쓰인다(index.html 이 fetch).
+값은 app.js `VERSION`·이력과 같은 semver 로 맞춰 둔다(위 "버전 체계" 참고).
 
 ## 유저스크립트 방식 추가 (2026-07-21, feature/userscript 브랜치)
 
