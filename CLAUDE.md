@@ -29,8 +29,8 @@ pweb.kr 웹 할인등록 사이트 보조 도구 (북마클릿 "pweb 주차할�
 - `pweb-parking-calc.user.js` — Tampermonkey 용 래퍼(자동 실행 방식).
   app.js 를 로드할 뿐 로직 없음. `@updateURL` 로 자체 자동 갱신.
 - `index.html` (구 install.html — GitHub Pages 랜딩이 되도록 2026-07-21 개명) —
-  설치·사용 안내 페이지. `<script type="text/plain" id="src">` 안에는 **271자
-  로더만** 들어 있고, 이를 `javascript:`+encodeURIComponent 로 href 를 런타임에
+  설치·사용 안내 페이지. `<script type="text/plain" id="src">` 안에는 **로더만**
+  들어 있고(원문 332자 / `javascript:`+인코딩 후 891자 — 예전 문서의 "271자"는 낡은 수치), 이를 `javascript:`+encodeURIComponent 로 href 를 런타임에
   만든다. 과거의 "두 파일 동기화" 규칙은 로더 전환으로 폐기됨.
 
 ## 형태를 북마클릿으로 정한 이유 (2026-07-16 확정)
@@ -71,7 +71,7 @@ app.js 를 받으므로 구버전 배너 로직은 폐기됨. `_headers` 는 Clo
 
 전체 코드를 북마크에 내장하면 **모바일 브라우저의 URL 길이 한계로 실행이
 조용히 실패한다** (인코딩 후 수만 자. `javascript:alert('OK')` 는 되는데 본체는
-안 되는 것으로 확정). 그래서 북마크에는 271자 로더만 넣고 본체(app.js)를
+안 되는 것으로 확정). 그래서 북마크에는 짧은 로더만 넣고 본체(app.js)를
 클릭 시마다 받아 실행한다. 사이트에 CSP 없음 — github.io 스크립트 로드 실측
 성공. 항상 최신 실행이므로 **배포 = app.js 수정 후 push 가 전부**.
 version.json 은 이제 **설치 페이지 h1 배지 표시**에만 쓰인다(index.html 이 fetch).
@@ -121,7 +121,9 @@ version.json 은 이제 **설치 페이지 h1 배지 표시**에만 쓰인다(in
 - compat 검사(모바일 모드): #differentTime + 파싱 가능, fncGoDscnt 존재,
   URL 차량id 숫자, parkVisitCar 필드 검증.
 - **조회 실패는 2종으로 나눈다 (2026-07-22 버그 수정)**: 응답 본문은 왔는데 기대 필드가
-  없으면 `M.structBad` = **구조 변경 → ⛔차단**, 네트워크·세션 등으로 아예 못 받은 건
+  없으면 `M.badStruct`++ = **구조 변경 → ⛔차단**(2026-08-08 부터 **연속 2회**여야 차단.
+  세션 만료·순간 서버 오류가 JSON 으로 한 번 온 것만으로 굳지 않게. 5초 스로틀이라 ~10초),
+  네트워크·세션 등으로 아예 못 받은 건
   `M.err` = **일시적 → 차단하지 않고 재시도**(데이터 없으면 "연결이 불안정합니다" 대기 화면).
   예전엔 `M.err >= 3` 을 차단 사유로 써서, **백그라운드에 있다가 돌아오면 ⛔사용금지로
   굳어버렸다**(브라우저가 백그라운드 fetch 를 끊음 → 새로고침해야 복구). 지금은
@@ -260,6 +262,10 @@ version.json 은 이제 **설치 페이지 h1 배지 표시**에만 쓰인다(in
 건물마다 사이트 구조가 다를 수 있다. 매 폴링마다 `compat()` 로 기대 구조를
 검사하고, 하나라도 어긋나면 **폴링을 완전히 멈추고 ⛔사용금지 화면**만 남긴다
 (계산 UI 전부 제거, "강주상 (tsusai@msn.com) 에게 문의" + 기술 사유 표시).
+**차단은 되돌아오지 않는다 (2026-08-08)**: `block()` 이 `BLOCKED=true` 를 세우고 `render()`
+맨 앞에서 이를 막는다. 예전엔 폴링만 끊어서, 포그라운드 복귀(`visibilitychange`) 같은
+다른 경로로 `render()` 가 한 번 더 불리면 **시계가 멈춘 정상 화면**이 그려질 수 있었다.
+BLOCKED 는 IIFE 지역 변수라 **패널을 닫았다 다시 열면 새 실행에서 초기화**된다(새로고침 불필요).
 검사 항목: `#peId` 존재, `fncDoListMst`·`fncDetailInfo` 함수 존재,
 `dataSetMst` 배열 + `id`/`carNo`/`incar_min` 필드 + incar_min 숫자,
 `dataSetDtl` 배열 + `discountTypeId`/`dc_time`/`discount_name` 필드 + dc_time 숫자.

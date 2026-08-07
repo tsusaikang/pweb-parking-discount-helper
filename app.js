@@ -23,7 +23,7 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '1.3.11'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
+  var VERSION = '1.3.12'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
   var TICKETS = [     // id = 사이트 discountTypeId
@@ -125,7 +125,10 @@
   // **구조 변경**(→차단), 네트워크·세션 등으로 아예 못 받은 건 **일시적**(→차단하지 않고 재시도).
   // 백그라운드로 내려가면 브라우저가 fetch 를 끊어 연속 실패가 나는데, 예전엔 이게
   // 구조 비호환과 똑같이 취급돼 ⛔사용금지로 굳어버렸다(새로고침해야 복구).
-  var M = { applied: null, lastFetch: 0, err: 0, structBad: false };
+  // 2026-08-08: 구조 판정도 **연속 2회**를 요구한다. 세션 만료·일시적 서버 오류가
+  // JSON 으로 한 번 돌아왔을 뿐인데 "구조 변경"으로 확정돼 차단되던 위험을 줄인다
+  // (조회는 5초 스로틀이라 실제 차단까지 약 10초 — 오탐 대비 충분히 짧다).
+  var M = { applied: null, lastFetch: 0, err: 0, badStruct: 0 };
   function mobParams() {
     var seg = location.pathname.split('/'); // ['','discount','doView…',id,token,날짜,cardType]
     // member_id 는 서버가 페이지(사이드 메뉴)에 박아준 "이름(ID)" 패턴에서 추출
@@ -150,8 +153,8 @@
           var arr = j.parkVisitCar;
           if (typeof arr === 'string') { try { arr = JSON.parse(arr); } catch (e) { arr = []; } }
           M.applied = Array.isArray(arr) ? arr : [];
-          M.err = 0; M.structBad = false;
-        } else if (j) { M.structBad = true; } // 응답은 왔는데 기대 필드 없음 = 구조 변경
+          M.err = 0; M.badStruct = 0;
+        } else if (j) { M.badStruct++; }      // 응답은 왔는데 기대 필드 없음 — 연속 2회여야 구조 변경
         else { M.err++; }                     // HTTP 오류 — 일시적으로 본다
       }).catch(function () { M.err++; });     // 네트워크·파싱 실패 — 일시적
     } catch (e) { M.err++; }
@@ -167,7 +170,7 @@
       else if (parseDT(dt.value || dt.textContent) == null) bad.push('주차시간 형식 다름');
       if (typeof window.fncGoDscnt !== 'function') bad.push('fncGoDscnt 함수 없음');
       if (!/^\d+$/.test((location.pathname.split('/')[3] || ''))) bad.push('URL 차량id 없음');
-      if (M.structBad) bad.push('조회 API 응답 형식 다름'); // 일시적 실패(M.err)는 차단하지 않는다
+      if (M.badStruct >= 2) bad.push('조회 API 응답 형식 다름(연속 2회)'); // 1회·일시적 실패(M.err)는 차단하지 않는다
       if (M.applied && M.applied.length) {
         var d0 = M.applied[0];
         if (!('discountTypeId' in d0) || !('dc_time' in d0) || !('discount_name' in d0)) bad.push('적용내역 필드 다름');
@@ -213,8 +216,13 @@
       '</div>';
   }
 
-  // 차단 화면: 폴링을 완전히 멈추고 사용 금지 안내만 남긴다
+  // 차단 화면: 폴링을 완전히 멈추고 사용 금지 안내만 남긴다.
+  // BLOCKED 는 "이 패널은 끝났다"는 표시 — 폴링 외의 경로(포그라운드 복귀 등)로
+  // render() 가 다시 불려 **시간이 멈춘 정상 화면**이 그려지는 걸 막는다 (2026-08-08).
+  // 패널을 닫았다 다시 열면 새 실행이라 BLOCKED 도 초기화된다(새로고침 불필요).
+  var BLOCKED = false;
   function block(bad) {
+    BLOCKED = true;
     clearInterval(window.__pk_t);
     setStatus('#7f1d1d', '⛔ 사용 금지');
     var el = document.getElementById('__pk_body');
@@ -263,6 +271,7 @@
   }
 
   function render() {
+    if (BLOCKED) return; // 차단 뒤에는 어떤 경로로도 다시 그리지 않는다
     var el = document.getElementById('__pk_body');
     if (!el) return;
     var bad = compat();
