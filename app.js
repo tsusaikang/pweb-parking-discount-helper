@@ -23,9 +23,16 @@
  * ▼ 주차장 규칙이 다르면 BASE_FREE 와 TICKETS 만 고치면 된다 ▼
  */
 (function () {
-  var VERSION = '1.3.12'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
+  var VERSION = '1.4.0'; // 대.중.소 (index.html 버전 이력·version.json 과 동일 체계로 통일)
   var HOME = 'https://tsusaikang.github.io/pweb-parking-discount-helper/'; // 설치·안내 페이지
   var BASE_FREE = 30; // 기본 무료 주차시간(분)
+  // 출차 여유(분) — 자리에서 일어나 차까지 걸어가 출구 차단기를 통과하기까지.
+  // 추천·초과안내를 "경과시간 + 이 버퍼"까지 덮도록 맞춘다 (2026-08-08 사용자 확정).
+  //   이유: 경과시간에 딱 맞춘 최소 비용 조합은 여유가 0~3분으로 남는다. 실측 사례에서
+  //   9시간57분 주차에 "500원 절약" 안내가 여유 33분→3분짜리 조합을 권했는데,
+  //   차단기까지 걸어가는 동안 초과되면 그 500원을 현장에서 다시 낸다. 절약이 아니라
+  //   **지연된 500원**이라 기댓값상 손해. 30분권이 500원이라 초과분 단가도 같다.
+  var EXIT_BUFFER = 15;
   var TICKETS = [     // id = 사이트 discountTypeId
     { id: '5', m: 120,  p: 0,     n: '무료2시간' }, // 평일 · 1회 한정
     { id: '1', m: 30,   p: 500,   n: '30분권' },
@@ -81,7 +88,9 @@
     Object.keys(counts).forEach(function (id) {
       if (byId[id] && byId[id].p > 0) curPaid += counts[id] * byId[id].p;
     });
-    var need = Math.ceil(elapsed - BASE_FREE - byId[FREE_ID].m); // 무료2시간 활용 가정
+    // 무료2시간 활용 가정 + 출차 여유(EXIT_BUFFER)까지 덮는 조합을 "최적"으로 본다.
+    // 버퍼가 없으면 여유 3분짜리 조합이 최적으로 뽑혀 "절약" 안내가 오히려 손해가 된다.
+    var need = Math.ceil(elapsed + EXIT_BUFFER - BASE_FREE - byId[FREE_ID].m);
     var opt = best(need);
     var optCost = opt.cost || 0;
     if (curPaid <= optCost) return null;
@@ -261,6 +270,7 @@
     if (head) head.style.background = color;
     if (st) st.textContent = MOBILE
       ? text.replace('0원 완료', '완료').replace('적용 필요', '부족').replace('사용 금지', '금지')
+            .replace('곧 만료', '곧만료')
       : text;
   }
 
@@ -328,6 +338,9 @@
     });
 
     var covered = BASE_FREE + sum, margin = covered - elapsed;
+    // 0원이긴 한데 여유가 출차 시간보다 짧은 상태 — 초록 ✓완료로 보이면 3분 남은 걸
+    // 안심하고 넘기게 된다. 주황 "곧 만료" 로 구분한다 (2026-08-08 사용자 확정).
+    var soon = margin >= 0 && margin < EXIT_BUFFER;
 
     // ── 모바일: 우측 세로 도크용 최소 정보 레이아웃 (2026-07-21 사용자 요청) ──
     // 페이지에 이미 보이는 차량번호·주차시간 등은 생략. 상태 + 핵심 수치 +
@@ -356,13 +369,17 @@
       }).join('');
       var mh;
       if (margin >= 0) {
-        setStatus('#137a3f', '✓ 0원 완료');
+        var mC = soon
+          ? { st: '#b45309', txt: '⏰ 곧 만료', ic: '⏰', big: '#8a4a00', sub: '#b45309' }
+          : { st: '#137a3f', txt: '✓ 0원 완료', ic: '✅', big: '#0c5a2e', sub: '#137a3f' };
+        setStatus(mC.st, mC.txt);
         mh = '<div style="text-align:center;padding:4px 0 2px">' +
-             '<div style="font-size:22px;line-height:1">✅</div>' +
-             '<div style="font-size:14px;font-weight:800;color:#0c5a2e;margin-top:3px">0원</div>' +
-             '<div style="font-size:17px;font-weight:800;color:#0c5a2e;margin-top:11px;line-height:1.2">' + fmt(margin) + '</div>' +
-             '<div style="font-size:12px;color:#137a3f;font-weight:700;margin-top:1px">남음</div>' +
-             '<div style="font-size:12px;color:#137a3f;margin-top:11px">~<b>' + clock(now + margin * 60000) + '</b></div>' +
+             '<div style="font-size:22px;line-height:1">' + mC.ic + '</div>' +
+             '<div style="font-size:14px;font-weight:800;color:' + mC.big + ';margin-top:3px">0원</div>' +
+             '<div style="font-size:17px;font-weight:800;color:' + mC.big + ';margin-top:11px;line-height:1.2">' + fmt(margin) + '</div>' +
+             '<div style="font-size:12px;color:' + mC.sub + ';font-weight:700;margin-top:1px">남음</div>' +
+             '<div style="font-size:12px;color:' + mC.sub + ';margin-top:11px">~<b>' + clock(now + margin * 60000) + '</b></div>' +
+             (soon ? '<div style="margin-top:9px;padding:5px 3px;background:#fff4e0;border:1px solid #f0c36d;border-radius:8px;font-size:11px;font-weight:800;color:#8a4a00;line-height:1.3">서둘러<br>출차하세요</div>' : '') +
              '</div>';
         if (appliedChips) mh += section('적용된 할인', appliedChips);
         // 필요보다 많이 적용됐으면: 헤드라인(절약액) + 색 맞춘 그룹 라벨(빼기/넣기).
@@ -393,7 +410,7 @@
       } else {
         var mShort = elapsed - covered;
         var mFreeUsed = (counts[FREE_ID] || 0) >= 1;
-        var mCombo = best(Math.ceil(mShort - (mFreeUsed ? 0 : byId[FREE_ID].m)));
+        var mCombo = best(Math.ceil(mShort + EXIT_BUFFER - (mFreeUsed ? 0 : byId[FREE_ID].m)));
         var mCover = (mFreeUsed ? 0 : byId[FREE_ID].m) + (mCombo.cover || 0);
         var mMargin = covered + mCover - elapsed;
         var pendChips = (mFreeUsed ? '' : mchip(byId[FREE_ID], 1, false)) +
@@ -428,11 +445,18 @@
     if (appliedCards) appliedCards = '<div style="margin:8px 0 2px;font-weight:700;color:#555">현재 적용된 할인</div>' + appliedCards;
 
     if (margin >= 0) {
-      setStatus('#137a3f', '✓ 0원 완료');
-      h += '<div style="background:#e6f7ed;border:1px solid #86d9a8;border-radius:10px;padding:12px;text-align:center">' +
-           '<div style="font-size:13px;color:#137a3f;font-weight:700">✅ 0원 상태 — 추가 적용 불필요</div>' +
-           '<div style="font-size:22px;font-weight:800;color:#0c5a2e;margin-top:6px">' + fmt(margin) + ' 남음</div>' +
-           '<div style="font-size:15px;color:#137a3f;margin-top:2px"><b>' + clock(now + margin * 60000) + '</b>까지 0원</div></div>';
+      var pC = soon
+        ? { st: '#b45309', box: 'background:#fff8e8;border:1px solid #f0c36d', head: '#8a4a00', big: '#8a4a00', sub: '#b45309',
+            txt: '⏰ 곧 만료', title: '⏰ 0원이지만 곧 만료 — 서둘러 출차하세요' }
+        : { st: '#137a3f', box: 'background:#e6f7ed;border:1px solid #86d9a8', head: '#137a3f', big: '#0c5a2e', sub: '#137a3f',
+            txt: '✓ 0원 완료', title: '✅ 0원 상태 — 추가 적용 불필요' };
+      setStatus(pC.st, pC.txt);
+      h += '<div style="' + pC.box + ';border-radius:10px;padding:12px;text-align:center">' +
+           '<div style="font-size:13px;color:' + pC.head + ';font-weight:700">' + pC.title + '</div>' +
+           '<div style="font-size:22px;font-weight:800;color:' + pC.big + ';margin-top:6px">' + fmt(margin) + ' 남음</div>' +
+           '<div style="font-size:15px;color:' + pC.sub + ';margin-top:2px"><b>' + clock(now + margin * 60000) + '</b>까지 0원</div>' +
+           (soon ? '<div style="font-size:12px;color:#8a4a00;margin-top:6px">차까지 걸어가 차단기를 통과하는 데 보통 ' + EXIT_BUFFER + '분은 잡아야 합니다.</div>' : '') +
+           '</div>';
       h += appliedCards;
       // 필요보다 많이 적용됐으면: 현재분과의 차이(뭘 빼고/뭘 넣어라)를 안내 (같은 0원)
       var over = overApplied(elapsed, counts);
@@ -455,7 +479,7 @@
     } else {
       var shortage = elapsed - covered;
       var freeUsed = (counts[FREE_ID] || 0) >= 1;
-      var need = Math.ceil(shortage - (freeUsed ? 0 : byId[FREE_ID].m));
+      var need = Math.ceil(shortage + EXIT_BUFFER - (freeUsed ? 0 : byId[FREE_ID].m));
       var combo = best(need);
       var pendCover = (freeUsed ? 0 : byId[FREE_ID].m) + (combo.cover || 0);
       var finalMargin = covered + pendCover - elapsed;
@@ -472,7 +496,8 @@
       });
       h += '<div style="margin-top:6px;color:#555">예상 비용 <b>' + (combo.cost || 0).toLocaleString() +
            '원</b> · 적용 후 여유 ' + fmt(finalMargin) +
-           ' (<b>' + clock(now + finalMargin * 60000) + '</b>까지)</div>';
+           ' (<b>' + clock(now + finalMargin * 60000) + '</b>까지)' +
+           '<div style="color:#999;font-size:12px;margin-top:2px">차까지 걸어가 차단기를 통과할 <b>출차 여유 ' + EXIT_BUFFER + '분</b>을 포함해 계산했습니다.</div></div>';
     }
     el.innerHTML = h;
   }
@@ -524,7 +549,7 @@
       '<span id="__pk_min" style="cursor:pointer;font-size:16px;padding:2px 6px">▾</span>' +
       '<span id="__pk_x" style="cursor:pointer;font-size:16px;padding:2px 6px">✕</span></span></div>' +
       '<div id="__pk_body" style="padding:12px"></div>' +
-      '<div id="__pk_foot" style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 기준 · v' + VERSION + ' (항상 최신 실행)<br><span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700">ℹ️ 설치·사용 안내 페이지 열기</span> · 문의: tsusai@msn.com</div>';
+      '<div id="__pk_foot" style="padding:6px 12px;color:#999;border-top:1px solid #eee">1초마다 자동 갱신 · 기본무료 ' + BASE_FREE + '분 · 출차여유 ' + EXIT_BUFFER + '분 반영 · v' + VERSION + '<br><span id="__pk_home" style="cursor:pointer;color:#2b6cb0;font-weight:700">ℹ️ 설치·사용 안내 페이지 열기</span> · 문의: tsusai@msn.com</div>';
   document.body.appendChild(p);
 
   // 모바일: 도크 폭만큼 본문 오른쪽 여백을 만들어 가려지는 영역이 없게 한다. 닫으면 원복.
