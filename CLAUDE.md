@@ -60,6 +60,14 @@ index.html 을 `https://tsusaikang.github.io/pweb-parking-discount-helper` 에 �
 semver 로 올리고 push.** (app.js 는 version.json 을 fetch 하지 않는다 — 로더가 늘 최신
 app.js 를 받으므로 구버전 배너 로직은 폐기됨. `_headers` 는 Cloudflare 용, GitHub Pages 불필요.)
 
+**Cowork 세션에서 push 하는 법 (2026-09-12)**: `github` 리모트는 SSH 에서 **토큰 내장 HTTPS
+주소**(`https://tsusaikang:<PAT>@github.com/...`, url·pushurl 둘 다)로 바꿨다 — Cowork 의
+device_bash 는 맥의 `~/.ssh`·키체인이 안 보이는 격리 VM 이라 SSH push 가 불가능했기 때문.
+소스트리도 같은 주소로 push/pull 한다. PAT 는 fine-grained(이 저장소 contents 쓰기)라 **만료되면
+`git remote set-url github` + `set-url --push` 둘 다 갱신**해야 한다(pushurl 이 따로 있다).
+그 VM 은 파일 삭제가 기본 금지라 `git status` 가 남긴 `.git/index.lock` 을 못 지운다 —
+읽기용 확인은 `git --no-optional-locks status` 로 할 것.
+
 검색 등록 상태 (2026-07-21): robots.txt·sitemap.xml·.nojekyll 배포됨.
 **Google** — Search Console 소유권 확인 파일 `googleefc4499566ba1a64.html`
 (**삭제 금지**, 지우면 소유권 해제) + URL 검사에서 색인 생성 요청까지 완료.
