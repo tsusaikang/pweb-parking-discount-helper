@@ -10,7 +10,8 @@
 - 배포: `github/master` = GitHub Pages(`https://tsusaikang.github.io/pweb-parking-discount-helper`). 작업 트리 깨끗.
 - 운영 문서는 2026-10-25 에 역할별로 분리됐고(CLAUDE.md 규칙·현행 / HISTORY.md 경위 / HANDOVER.md 상태),
   2026-10-29 에 머리말 기준일·갱신 시각 표기와 기본 시간대(KST) 규칙을 맞췄다.
-- 기록 페이지(records-pages)는 이 프로젝트에 **없다** — 세울지 여부는 아래 §3.
+- 기록 페이지(records-pages)는 이 프로젝트에 **두지 않기로 했다**(2026-10-29) — 저장소·GitHub Pages 가 공개라
+  잠글 수 없고, 담을 내용은 이미 CLAUDE.md·HISTORY.md·index.html 에 공개돼 있다.
 
 ## 2. 다음 할 일
 
@@ -20,8 +21,7 @@
 
 ## 3. 사용자 입력 대기
 
-- **기록 페이지를 세울지**: 이 저장소는 공개(GitHub Pages)라 로그인 잠금이 안 되고, 담을 내용(계산 규칙·결정
-  경위)도 이미 공개 문서에 다 있다. 세운다면 공개 페이지로 이 저장소 `records/` 에 둘지, 아니면 두지 않을지.
+- 없음.
 
 ## 4. 최근 방향 전환
 
