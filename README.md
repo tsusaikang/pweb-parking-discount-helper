@@ -47,8 +47,9 @@
 | `index.html` | 설치·사용 안내 페이지(공개: <https://tsusaikang.github.io/pweb-parking-discount-helper>). 북마클릿 로더를 런타임에 `javascript:` URL로 조립하고, 문서 끝에 버전 이력이 있습니다. |
 | `app.js` | 계산기 본체(유일한 로직 원본). 북마클릿 로더와 유저스크립트가 매번 이 파일을 받아 실행합니다. |
 | `pweb-parking-calc.user.js` | Tampermonkey/Userscripts용 래퍼. `app.js`를 로드할 뿐 로직은 없습니다. |
-| `version.json` | 설치 페이지 배지용 버전. `app.js`의 `VERSION`·`index.html` 이력과 같은 semver입니다. |
-| `CLAUDE.md` · `HISTORY.md` · `HANDOVER.md` | 작업 규칙·현행 사양 / 결정 경위·실측 사례 / 지금 상태·다음 할 일 (운영 문서). |
+| `version.json` | 현재 버전(`app.js`의 `VERSION`·`index.html` 이력과 같은 semver). 설치 페이지 배지가 읽고, 2026-07-21 이전의 코드 내장형 북마클릿도 이 값을 보고 업데이트 안내를 띄웁니다. |
+| `CLAUDE.md` · `HISTORY.md` · `HANDOVER.md` | 작업 규칙·현행 사양 / 결정 경위·실측 사례 / 지금 상태·다음 할 일 (운영 문서). 파일별 역할·연결은 `CLAUDE.md`의 "문서 지도". |
+| `tools/docs-check.py` | 문서 지도 점검 도구(개발용) — 등록·연결·버전·값 일치 확인. |
 
 ## 설치
 
