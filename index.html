@@ -378,7 +378,7 @@
       <div class="mcard" style="border:1px solid #86d9a8;background:#e6f7ed"><div><b>30분권</b><span class="chip" style="background:#137a3f">1장</span><span style="color:#888;margin-left:6px">30분 · 500원</span></div><span style="color:#137a3f;font-weight:700">✓ 적용됨<span class="n">5</span></span></div>
       <div style="margin-top:6px;color:#555">예상 비용 <b>2,500원</b> · 적용 후 여유 22분 (<b>15:33</b>까지)<span class="n">6</span></div>
     </div>
-    <div class="ft">1초마다 자동 갱신 · 기본무료 30분 기준 · v2026.07.22 (항상 최신)<br>문의: tsusai@msn.com</div>
+    <div class="ft">1초마다 자동 갱신 · 기본무료 30분 · 출차여유 15분 반영 · <span class="vnow">v…</span><br>ℹ️ 설치·사용 안내 페이지 열기 · 문의: tsusai@msn.com</div>
   </div>
   <ul class="legend">
     <li><span class="n">1</span>지금 상태 — 헤더 색으로 한눈에: 빨강 ⚠ 적용 필요 / 초록 ✓ 0원 완료 / 파랑 ℹ 안내</li>
@@ -401,7 +401,7 @@
         <div style="font-size:15px;color:#137a3f"><b>15:33</b>까지 0원<span class="n">8</span></div>
       </div>
     </div>
-    <div class="ft">1초마다 자동 갱신 · 기본무료 30분 기준 · v2026.07.22 (항상 최신)<br>문의: tsusai@msn.com</div>
+    <div class="ft">1초마다 자동 갱신 · 기본무료 30분 · 출차여유 15분 반영 · <span class="vnow">v…</span><br>ℹ️ 설치·사용 안내 페이지 열기 · 문의: tsusai@msn.com</div>
   </div>
   <ul class="legend">
     <li><span class="n">7</span>앞으로 몇 분 여유가 있는지 — 1초마다 실시간으로 줄어듭니다</li>
@@ -423,9 +423,11 @@
   </table>
   <p style="margin-top:10px"><b>커버 시간 = 기본무료 30분 + 적용된 할인 시간 합계.</b>
      커버가 경과시간보다 크면 0원, 모자라면 <b>무료2시간을 먼저</b> 쓰고 남는 만큼을
-     최소 비용 조합으로 채웁니다. 항상 경과시간을 넘겨 덮도록 안전하게 올립니다.</p>
-  <p class="muted">주차장 규칙(기본 무료시간·할인권 종류)이 바뀌면
-     <code>app.js</code> 맨 위의 <code>BASE_FREE</code>·<code>TICKETS</code> 값만 고치면 됩니다.</p>
+     최소 비용 조합으로 채웁니다. 딱 맞추지 않고 <b>출차 여유 15분</b>을 더해, 추천 조합과 "절약 가능" 안내 모두
+     <b>경과시간 + 15분</b>까지 덮는 조합을 고릅니다(차까지 걸어가 차단기에 닿는 동안 초과되지 않게).
+     이미 0원이라도 남은 시간이 15분 미만이면 주황색 <b>“⏰ 곧 만료”</b>로 표시됩니다.</p>
+  <p class="muted">주차장 규칙(기본 무료시간·할인권 종류·출차 여유)이 바뀌면
+     <code>app.js</code> 맨 위의 <code>BASE_FREE</code>·<code>TICKETS</code>·<code>EXIT_BUFFER</code> 값만 고치면 됩니다.</p>
 
   <h2>8. 업데이트 — 신경 쓸 것 없음</h2>
   <p>어느 방법이든 실제 계산기는 실행할 때마다 이 사이트에서 <b>항상 최신 버전으로 받아 실행</b>됩니다.
@@ -516,8 +518,10 @@
     var href = 'javascript:' + encodeURIComponent(src);
     document.getElementById('bm').setAttribute('href', href);
     document.getElementById('raw').value = href;
+    function setNow(s) { var vn = document.querySelectorAll('.vnow'); for (var i = 0; i < vn.length; i++) vn[i].textContent = s; }
+    var topTag = document.querySelector('.vtag'); if (topTag) setNow(topTag.textContent);   // 화면 예시 버전 = 버전 이력 최상단
     fetch('version.json', {cache:'no-store'}).then(function(r){ return r.json(); })
-      .then(function(v){ document.getElementById('ver').textContent = 'v' + v.version; })
+      .then(function(v){ document.getElementById('ver').textContent = 'v' + v.version; setNow('v' + v.version); })
       .catch(function(){});
     document.getElementById('copyBtn').onclick = function () {
       var btn = this, t = document.getElementById('raw');
